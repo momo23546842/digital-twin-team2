@@ -1,5 +1,5 @@
 # digital-twin-team2
-# digital-twin-team2
+
 
 ## Overview
 digital-twin-team2 is a prototype Digital Twin chatbot platform that models and simulates an agent/persona using a combination of agent-based workflows, persistent state, and retrieval-augmented generation (RAG). The repository implements a Next.js (App Router) TypeScript application designed to be modular, observable, and extensible.
