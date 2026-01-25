@@ -2,7 +2,7 @@
 
 Author: digital-twin-team2  
 Version: 1.0 (2026-01-25)  
-Project: Digital Twin — Personal AI Agent (Single Persona MVP)
+Project: Digital Twin — Personal AI Agent 
 
 This document is an implementation-ready technical design for a "Personal AI Agent" (Single Persona MVP) built with Next.js (App Router), TypeScript, Vercel AI SDK, and Upstash Vector. It defines the RAG pipeline, Upstash vector schema, MCP (Model Context Protocol) tools, frontend component architecture, and the API contract required for Week 2 deliverables. This design deliberately uses a generic persona ("Subject") appropriate for a team project (no real individual's name or identifying personal data).
 
