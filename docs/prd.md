@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-This Product Requirements Document (PRD) defines the objectives, scope, functional and non-functional requirements for the **Digital Twin** project. It serves as a shared reference for the team during design, development, and evaluation.
+This PRD defines the objectives and requirements for the "Digital Twin" project. The system is a Personal AI Agent designed to represent a candidate in professional job interviews. It uses Retrieval-Augmented Generation (RAG) and Model Context Protocol (MCP) to answer recruiter questions with factual accuracy based on the user's verified professional data.
 
 ---
 
