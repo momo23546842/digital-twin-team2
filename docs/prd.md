@@ -10,9 +10,7 @@ This PRD defines the objectives and requirements for the "Digital Twin" project.
 
 ## 2. Problem Statement
 
-Physical and simulated systems often lack a unified, real-time representation that enables monitoring, analysis, and prediction. The absence of such a system makes it difficult to understand current states, anticipate future behavior, and support informed decision-making.
-
-The Digital Twin project addresses this by creating a virtual representation of a system that mirrors its state using data, models, and agents.
+Recruiters and hiring managers often rely on static resumes and portfolios (PDFs/Websites), which fail to capture a candidate's depth or context. They cannot ask specific follow-up questions to a static document. This project addresses this by creating an interactive AI Digital Twin that mirrors the candidate's professional persona, allowing recruiters to "interview" the candidate 24/7 via a chat interface.
 
 ---
 
