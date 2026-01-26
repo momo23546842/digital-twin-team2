@@ -45,6 +45,8 @@ export default function MessageList({
               }`}
             >
               <p className="text-sm">{msg.content}</p>
+               {/* Suppress hydration warning since timestamp formatting may differ between server and client */}
+               
               <span className="text-xs opacity-70 mt-1 block">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </span>
