@@ -1,22 +1,31 @@
 import Groq from "groq-sdk";
 
-if (!process.env.GROQ_API_KEY) {
-  throw new Error("GROQ_API_KEY is not defined in environment variables");
+// Trim the API key in case there are accidental leading/trailing spaces
+const groqApiKey = process.env.GROQ_API_KEY?.trim();
+const groqModel = process.env.GROQ_MODEL?.trim() || "mixtral-8x7b-32768";
+
+let groq: Groq | null = null;
+if (groqApiKey) {
+  groq = new Groq({ apiKey: groqApiKey });
+} else {
+  console.warn("GROQ_API_KEY is not set – chat completions will return a placeholder.");
 }
 
-export const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+export { groq };
 
 /**
  * Call Groq API with chat messages
  */
 export async function callGroqChat(
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>
-) {
+): Promise<string> {
+  if (!groq) {
+    return "[Groq API key not configured – unable to generate a response]";
+  }
+
   try {
     const response = await groq.chat.completions.create({
-      model: "mixtral-8x7b-32768",
+      model: "llama-3.3-70b-versatile",
       messages: messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
@@ -26,8 +35,18 @@ export async function callGroqChat(
     });
 
     return response.choices[0]?.message?.content || "";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Groq API error:", error);
-    throw error;
+
+    const errMsg = (error?.message || "").toString().toLowerCase();
+    const errCode = error?.error?.code || "";
+
+    // Handle decommissioned-model errors gracefully
+    if (errMsg.includes("decommissioned") || errCode === "model_decommissioned") {
+      return "[Groq model decommissioned. Set GROQ_MODEL to a supported model and redeploy.]";
+    }
+
+    // For other API errors return a friendly fallback instead of throwing
+    return "[Groq API error occurred — unable to generate a response right now.]";
   }
 }
