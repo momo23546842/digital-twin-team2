@@ -1,11 +1,22 @@
 "use client";
 
 import { Message } from "@/types";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
+}
+
+/** Format timestamp consistently to avoid hydration mismatches */
+function formatTime(timestamp: Date | string): string {
+  const date = new Date(timestamp);
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes}:${seconds} ${ampm}`;
 }
 
 export default function MessageList({
@@ -13,6 +24,11 @@ export default function MessageList({
   isLoading = false,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,10 +61,11 @@ export default function MessageList({
               }`}
             >
               <p className="text-sm">{msg.content}</p>
-               {/* Suppress hydration warning since timestamp formatting may differ between server and client */}
-               
-              <span className="text-xs opacity-70 mt-1 block">
-                {new Date(msg.timestamp).toLocaleTimeString()}
+              <span
+                className="text-xs opacity-70 mt-1 block"
+                suppressHydrationWarning
+              >
+                {mounted ? formatTime(msg.timestamp) : ""}
               </span>
             </div>
           </div>
