@@ -31,19 +31,11 @@ Recruiters and hiring managers often rely on static resumes and portfolios (PDFs
 ---
 
 ## 4. Scope
-
-### In Scope
-
-* Core digital twin architecture
-* Agent-based logic (as defined in `agents.md`)
-* Data ingestion and processing
-* Documentation and repository structure
-
-### Out of Scope (Phase 1)
-
-* Production-grade deployment
-* Full-scale IoT hardware integration
-* Advanced security and authentication
+**In Scope (Phase 1 - MVP)**
+* **Target Persona:** Configuration of the system using **---** professional profile (Resume, Portfolio) to validate RAG accuracy.
+* **Core Architecture:** Next.js App Router, Vercel AI SDK, and Upstash Vector.
+* **MCP Server:** Implementation of Model Context Protocol for data retrieval.
+* **Deployment:** Public deployment on Vercel.
 
 ---
 
