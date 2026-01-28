@@ -16,17 +16,15 @@ Recruiters and hiring managers often rely on static resumes and portfolios (PDFs
 
 ## 3. Goals & Objectives
 
-### Primary Goals
+**Primary Goals**
+* Build a publicly accessible AI chatbot that accurately answers interview questions.
+* Implement a **RAG pipeline** using **Upstash Vector** to ground answers in real data.
+* Demonstrate "AI-assisted development" by generating technical designs from this PRD.
 
-* Create a digital twin that reflects the real or simulated system state
-* Enable modular, agent-based interaction with the system
-* Provide a clear foundation for analytics and future extensions
-
-### Success Metrics
-
-* System ingests and processes data successfully
-* Agents can operate independently and collaboratively
-* Documentation is clear enough for new contributors to onboard
+**Success Metrics**
+* System successfully retrieves context from the Upstash Vector Database.
+* The Agent accurately answers "Tell me about yourself" using the provided resume data.
+* Response latency is under 3 seconds.
 
 ---
 
