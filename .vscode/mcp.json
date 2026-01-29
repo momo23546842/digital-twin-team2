@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "digital-twin": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server/index.ts"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  }
+}
