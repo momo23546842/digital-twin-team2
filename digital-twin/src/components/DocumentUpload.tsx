@@ -14,6 +14,7 @@ export default function DocumentUpload({
 }: DocumentUploadProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,15 +26,73 @@ export default function DocumentUpload({
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  /**
+   * Extract text from a PDF file using dynamically loaded pdfjs-dist
+   */
+  const extractPdfText = async (file: File): Promise<string> => {
+    // Dynamically import pdfjs-dist only on client side
+    const pdfjsLib = await import("pdfjs-dist");
+    
+    // Use local worker from public folder
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    
+    const textParts: string[] = [];
+    
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(" ");
+      textParts.push(pageText);
+    }
+    
+    return textParts.join("\n\n");
+  };
+
+  /**
+   * Read file content based on file type
+   */
+  const readFileContent = async (file: File): Promise<string> => {
+    const fileName = file.name.toLowerCase();
+    
+    // Handle PDF files
+    if (fileName.endsWith(".pdf")) {
+      setStatus(`Extracting text from ${file.name}...`);
+      const text = await extractPdfText(file);
+      if (!text.trim()) {
+        throw new Error(`Could not extract text from "${file.name}". The PDF may be image-based or empty.`);
+      }
+      return text;
+    }
+    
+    // Handle text files
+    const content = await file.text();
+    
+    // Validate it's actually text
+    const nonPrintableCount = (content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
+    const binaryRatio = nonPrintableCount / content.length;
+    
+    if (binaryRatio > 0.1) {
+      throw new Error(`"${file.name}" appears to be a binary file. Please upload text files or PDFs.`);
+    }
+    
+    return content;
+  };
+
   const handleUpload = async () => {
     if (files.length === 0) return;
 
     setUploading(true);
+    setStatus("Processing files...");
 
     try {
       const documents = await Promise.all(
         files.map(async (file) => {
-          const content = await file.text();
+          const content = await readFileContent(file);
           return {
             id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             content,
@@ -42,6 +101,8 @@ export default function DocumentUpload({
           };
         })
       );
+
+      setStatus("Uploading to knowledge base...");
 
       // Send to ingest API
       const response = await fetch("/api/ingest", {
@@ -69,10 +130,13 @@ export default function DocumentUpload({
       }
 
       // Show success message
-      alert(`Successfully ingested ${documents.length} document(s)`);
+      setStatus(`Successfully ingested ${documents.length} document(s) (${result.vectorCount} chunks)`);
+      setTimeout(() => setStatus(""), 5000); // Clear after 5 seconds
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload documents");
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload documents";
+      setStatus(`Error: ${errorMessage}`);
+      alert(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -86,9 +150,21 @@ export default function DocumentUpload({
             Knowledge Base Documents
           </label>
           <span className="text-xs text-gray-500">
-            ({files.length} selected)
+            ({files.length} selected) • Supports: .txt, .md, .pdf
           </span>
         </div>
+
+        {status && (
+          <div className={`text-sm px-3 py-2 rounded ${
+            status.startsWith("Error") 
+              ? "bg-red-100 text-red-700" 
+              : status.startsWith("Success") 
+                ? "bg-green-100 text-green-700"
+                : "bg-blue-100 text-blue-700"
+          }`}>
+            {status}
+          </div>
+        )}
 
         <div className="flex gap-2">
           <button
@@ -115,7 +191,7 @@ export default function DocumentUpload({
           multiple
           onChange={handleFileSelect}
           className="hidden"
-          accept=".txt,.md,.pdf"
+          accept=".txt,.md,.text,.markdown,.pdf"
         />
 
         {files.length > 0 && (

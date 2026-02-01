@@ -12,7 +12,7 @@ export default function ChatPane() {
       id: "welcome",
       role: "assistant",
       content:
-        "Welcome to Digital Twin! I'm an AI assistant powered by Groq. Upload documents to build your knowledge base, then ask me questions about them.",
+        "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them!",
       timestamp: new Date(),
     },
   ]);

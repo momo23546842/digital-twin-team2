@@ -21,10 +21,10 @@ export async function generateEmbeddings(text: string): Promise<number[]> {
 
 /**
  * Simple hash-based embedding for demonstration
- * Creates a 384-dimensional vector from text
+ * Creates a 1536-dimensional vector from text (matches Upstash Vector index)
  */
 function simpleEmbedding(text: string): number[] {
-  const dimensions = 384;
+  const dimensions = 1536;
   const embedding: number[] = new Array(dimensions).fill(0);
 
   // Normalize text

@@ -34,7 +34,21 @@ export async function callGroqChat(
       temperature: 0.7,
     });
 
-    return response.choices[0]?.message?.content || "";
+    const content = response.choices[0]?.message?.content || "";
+    
+    // Ensure the content is a valid string (not binary/corrupted data)
+    if (typeof content !== "string") {
+      console.error("Groq returned non-string content:", typeof content);
+      return "[Error: Invalid response format from AI]";
+    }
+    
+    // Check for binary/corrupted content (common corruption patterns)
+    if (content.includes("\x00") || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(content)) {
+      console.error("Groq returned corrupted content");
+      return "[Error: Received corrupted response from AI. Please try again.]";
+    }
+    
+    return content;
   } catch (error: any) {
     console.error("Groq API error:", error);
 
