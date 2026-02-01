@@ -155,5 +155,6 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - All outputs should be explainable using MCP tool results or retrieved documents
 0cf06c8 (ai: refine MCP instructions formatting in agents.md)
 
-<!-- AI-assisted commit test -->
+<!-- AI-assisted commit test (Task 3/4 validation) -->
+
 
