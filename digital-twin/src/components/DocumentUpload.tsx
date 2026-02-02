@@ -75,8 +75,15 @@ export default function DocumentUpload({
     const content = await file.text();
     
     // Validate it's actually text
-    const nonPrintableCount = (content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
-    const binaryRatio = nonPrintableCount / content.length;
+    const MAX_BINARY_CHECK_CHARS = 10 * 1024; // Check only the first 10KB for binary content
+    const sampleContent =
+      content.length > MAX_BINARY_CHECK_CHARS
+        ? content.slice(0, MAX_BINARY_CHECK_CHARS)
+        : content;
+    const nonPrintableCount =
+      (sampleContent.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
+    const sampleLength = sampleContent.length || 1;
+    const binaryRatio = nonPrintableCount / sampleLength;
     
     if (binaryRatio > 0.1) {
       throw new Error(`"${file.name}" appears to be a binary file. Please upload text files or PDFs.`);
