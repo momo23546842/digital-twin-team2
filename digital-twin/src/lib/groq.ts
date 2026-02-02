@@ -42,8 +42,9 @@ export async function callGroqChat(
       return "[Error: Invalid response format from AI]";
     }
     
-    // Check for binary/corrupted content (common corruption patterns)
-    if (content.includes("\x00") || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(content)) {
+    // Check for binary/corrupted content (control chars, high bytes, replacement char)
+    // Detects: control chars (0x00-0x1F except tabs/newlines), high bytes (>0x7F indicating encoding issues), Unicode replacement char (U+FFFD)
+    if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]|[\uFFFD]/.test(content)) {
       console.error("Groq returned corrupted content");
       return "[Error: Received corrupted response from AI. Please try again.]";
     }
