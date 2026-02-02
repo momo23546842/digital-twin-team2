@@ -1,15 +1,25 @@
+
 # Digital Twin
 
-A sophisticated AI chatbot application built with Next.js 16 (App Router), TypeScript, Tailwind CSS, and Groq API for real-time AI inference. This project acts as a digital representation of a specific persona or knowledge base, with agent-based logic and RAG (Retrieval-Augmented Generation) support via Upstash Vector DB.
+![Status](https://img.shields.io/badge/Status-Active-success)
+![Next.js](https://img.shields.io/badge/Next.js-16.0-black)
+![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue)
+![Database](https://img.shields.io/badge/Database-Neon%20Postgres-green)
+
+## Overview
+
+This project is a sophisticated **Career Intelligence Engine** designed to embody a professional persona in the digital realm. Moving beyond the limitations of a standard chatbot, it acts as an active digital representative within the workspace, engineered to foster meaningful and proactive engagement.
+
+By integrating MCP (Model Context Protocol) for real-time, deep contextual understanding with Neon Postgres for persistent long-term memory, the system provides unparalleled depth. Combined with the lightning-fast response speeds of Groq, real-time voice interaction, and autonomous lead capture, this agent defines a new frontier for **active digital representation** in the modern workspace.
 
 ## 📋 Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript (Strict mode)
-- **Styling:** Tailwind CSS v4
-- **AI Inference:** Groq API (via SDK)
-- **Database/Storage:** Upstash (Redis for caching/rate-limiting, Vector DB for RAG)
-- **UI Components:** Lucide React icons
+- **Styling:** Tailwind CSS v4 / Shadcn UI
+- **AI Inference:** Groq API / Vercel AI SDK
+- **Database:** Neon Postgres (via Prisma ORM)
+- **Voice:** Web Speech API / Vercel AI SDK (Voice)
 - **Deployment:** Vercel
 - **Package Manager:** npm
 
@@ -20,103 +30,66 @@ Before you start, ensure you have:
 - **Node.js** (v18 or higher)
 - **npm** (v9 or higher)
 - **Git** for version control
+- **Neon Postgres Account** (for database)
 
 ## 📦 Installation
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/digital-twin.git
-cd digital-twin/digital-twin
+git clone <your-repo-url>
+cd digital-twin-team2
+
 ```
 
 ### 2. Install Dependencies
 
 ```bash
 npm install
+
 ```
 
-This will install all required packages:
+This will install all required packages including:
 
-**Core Dependencies:**
-- `next@16.1.4` - Next.js framework
-- `react@19.2.3` - React library
-- `react-dom@19.2.3` - React DOM
-- `groq-sdk@^0.37.0` - Groq AI API client
-- `@upstash/redis@^1.36.1` - Upstash Redis client
-- `@upstash/vector@^1.2.2` - Upstash Vector DB client
-- `zod@^4.3.5` - TypeScript-first schema validation
-- `class-variance-authority@^0.7.1` - Component styling utilities
-- `tailwind-merge@^3.4.0` - Tailwind CSS utilities merger
-- `lucide-react@^0.562.0` - Icon library
-
-**Dev Dependencies:**
-- `typescript@^5` - TypeScript compiler
-- `tailwindcss@^4` - Utility-first CSS framework
-- `@tailwindcss/postcss@^4` - PostCSS plugin for Tailwind v4
-- `eslint@^9` - Code linter
-- `eslint-config-next@16.1.4` - ESLint config for Next.js
-- `@types/node@^20` - TypeScript Node types
-- `@types/react@^19` - TypeScript React types
-- `@types/react-dom@^19` - TypeScript React DOM types
+* `next`, `react`, `react-dom` (Core)
+* `groq-sdk`, `ai` (AI)
+* `@prisma/client` (Database)
+* `lucide-react`, `class-variance-authority`, `tailwind-merge` (UI)
 
 ### 3. Configure Environment Variables
 
 Create a `.env.local` file in the project root:
 
-```bash
-# Copy template (already created)
-# Fill in your credentials:
-```
-
 **Required variables:**
 
 ```env
+# Database (Neon Postgres)
+# Get from: [https://console.neon.tech/app/projects](https://console.neon.tech/app/projects)
+DATABASE_URL="postgresql://user:password@ep-host.neon.tech/neondb?sslmode=require"
+
 # Groq API Key (required for AI inference)
-# Get from: https://console.groq.com/keys
+# Get from: [https://console.groq.com/keys](https://console.groq.com/keys)
 GROQ_API_KEY=gsk_xxxxxxxxxxxxxx
 
-# Upstash Redis (for caching & rate limiting)
-# Get from: https://console.upstash.com/redis
-UPSTASH_REDIS_REST_URL=https://xxxxx.upstash.io
-UPSTASH_REDIS_REST_TOKEN=xxxxxxxxxxxxxxxx
+# App Config
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Upstash Vector DB (for RAG embeddings)
-# Get from: https://console.upstash.com/vector
-UPSTASH_VECTOR_REST_URL=https://xxxxx-vector.upstash.io
-UPSTASH_VECTOR_REST_TOKEN=xxxxxxxxxxxxxxxx
-
-# GitHub API (optional, for integrations)
-# Get from: https://github.com/settings/tokens
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxx
 ```
 
-⚠️ **Important:** Never commit `.env.local` to version control. It is already in `.gitignore`.
+⚠️ **Important:** Never commit `.env.local` to version control.
 
-### 4. Get API Credentials
+### 4. Setup Database (Prisma)
 
-#### Groq API Key
-1. Go to https://console.groq.com/keys
-2. Sign up or log in
-3. Click "Create API Key"
-4. Copy the key and paste into `.env.local`
+Initialize your Neon Postgres database schema:
 
-#### Upstash Redis
-1. Go to https://console.upstash.com
-2. Create a new Redis database
-3. Copy REST URL and REST Token
-4. Paste into `UPSTASH_REDIS_*` variables
+```bash
+# Generate Prisma Client
+npx prisma generate
 
-#### Upstash Vector DB
-1. In Upstash console, create a Vector Index
-2. Copy REST URL and REST Token
-3. Paste into `UPSTASH_VECTOR_*` variables
+# Push schema to the database
+npx prisma db push
 
-#### GitHub Token (Optional)
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token (classic)"
-3. Scopes: `repo`, `read:user`
-4. Copy and paste into `GITHUB_TOKEN`
+```
 
 ## 🚀 Getting Started
 
@@ -124,36 +97,37 @@ GITHUB_TOKEN=ghp_xxxxxxxxxxxxxx
 
 ```bash
 npm run dev
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
-
-The page will auto-reload as you edit files in `src/app/`.
+Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) in your browser.
+The page will auto-reload as you edit files in `src/app/` or `app/`.
 
 ### Project Structure
 
 ```
-src/
+src/ or app/
+├── actions/            # Server Actions (DB writes, etc.)
 ├── app/
-│   ├── layout.tsx          # Root layout (shell)
-│   ├── page.tsx            # Landing page
-│   ├── globals.css         # Global styles & Tailwind
-│   └── api/
-│       └── chat/
-│           └── route.ts    # Chat API endpoint
+│   ├── layout.tsx      # Root layout
+│   ├── page.tsx        # Landing page
+│   └── api/            # API Routes
+├── components/
+│   ├── ui/             # Shadcn UI components
+│   └── chat/           # Chat interface & Voice controls
 ├── lib/
-│   ├── groq.ts            # Groq client initialization
-│   ├── redis.ts           # Upstash Redis client
-│   ├── vector.ts          # Upstash Vector DB client
-│   └── utils.ts           # Utility functions
-└── components/
-    └── ChatPane.tsx       # Main chat UI component
+│   ├── groq.ts         # Groq client
+│   ├── prisma.ts       # Database client (Singleton)
+│   └── utils.ts        # Utilities
+└── prisma/
+    └── schema.prisma   # Database schema definition
+
 ```
 
 ## 📝 Scripts
 
 ```bash
-# Development server (with hot reload)
+# Development server
 npm run dev
 
 # Build for production
@@ -162,8 +136,12 @@ npm run build
 # Start production server
 npm start
 
-# Run ESLint
+# Prisma Studio (Database GUI)
+npx prisma studio
+
+# Linting
 npm run lint
+
 ```
 
 ## 🔍 Code Quality
@@ -171,10 +149,10 @@ npm run lint
 ### TypeScript Strict Mode
 
 This project uses **strict TypeScript mode**:
-- All variables must be properly typed
-- No implicit `any` types
-- Null/undefined checks are enforced
-- Use `interface` for object shapes, `type` for unions
+
+* All variables must be properly typed.
+* No implicit `any` types.
+* Null/undefined checks are enforced.
 
 ### Linting
 
@@ -182,152 +160,102 @@ ESLint is configured with Next.js preset. To check code:
 
 ```bash
 npm run lint
+
 ```
 
 ## 🛠️ Development Guidelines
 
-### Creating New Server Components
+### Creating Server Components
 
 ```typescript
-// src/app/your-page/page.tsx
+// app/page.tsx
+import { prisma } from "@/lib/prisma"
+
 export default async function Page() {
-  return <div>Server Component</div>
+  const logs = await prisma.chatLog.findMany()
+  return <div>{logs.length} entries</div>
 }
+
 ```
 
 ### Creating Client Components
 
-Only use `"use client"` when you need interactivity:
+Only use `"use client"` when interactivity (hooks, event listeners) is needed.
 
 ```typescript
-// src/components/YourComponent.tsx
 "use client"
+import { useChat } from "ai/react"
 
-import { useState } from "react"
-
-export function YourComponent() {
-  const [state, setState] = useState(false)
-  return <div>Client Component</div>
+export function ChatComponent() {
+  const { messages, input, handleInputChange } = useChat()
+  return <input value={input} onChange={handleInputChange} />
 }
+
 ```
 
-### Calling the Chat API
+### Using Database (Prisma)
+
+Instead of Redis, we use Prisma to interact with Postgres:
 
 ```typescript
-// Server-side only
-import { groq } from "@/lib/groq"
+import { prisma } from "@/lib/prisma"
 
-const message = await groq.chat.completions.create({
-  messages: [{ role: "user", content: "Hello" }],
-  model: "mixtral-8x7b-32768",
+// Create a new record
+await prisma.lead.create({
+  data: {
+    email: "user@example.com",
+    name: "John Doe"
+  }
 })
-```
 
-### Using Redis Cache
-
-```typescript
-import { redis } from "@/lib/redis"
-
-// Set cache
-await redis.set("key", "value", { ex: 3600 })
-
-// Get cache
-const cached = await redis.get("key")
-```
-
-### Using Vector DB for RAG
-
-```typescript
-import { vectorIndex } from "@/lib/vector"
-
-// Upsert embeddings
-await vectorIndex.upsert([
-  { id: "1", values: [0.1, 0.2, ...], metadata: {} },
-])
-
-// Query similar vectors
-const results = await vectorIndex.query([0.1, 0.2, ...], { topK: 5 })
 ```
 
 ## 🧪 Testing
 
-Currently, no automated tests are configured. To add them:
+Currently, manual testing is recommended. Ensure:
 
-```bash
-npm install -D jest @testing-library/react @testing-library/jest-dom
-```
-
-Then create test files alongside components (e.g., `YourComponent.test.tsx`).
+1. Chat responds accurately using the System Prompt.
+2. Voice input/output works (Microphone permissions).
+3. Data appears in Neon Postgres after a conversation.
 
 ## 🚢 Deployment
 
 ### Deploy to Vercel
 
-1. Push to GitHub
-2. Go to https://vercel.com/new
-3. Import the repository
-4. Add environment variables (same as `.env.local`)
-5. Click Deploy
-
-Environment variables are managed securely in the Vercel dashboard and are never exposed to the client.
-
-### Build for Production
-
-```bash
-npm run build
-npm start
-```
+1. Push to GitHub.
+2. Go to https://vercel.com/new.
+3. Import the repository.
+4. **Add Environment Variables** (Copy from `.env.local`).
+5. Click Deploy.
 
 ## 📚 Documentation
 
-- **[PRD](../../docs/prd.md)** - Product Requirements & Acceptance Criteria
-- **[Agents](../../agents.md)** - AI Instructions & Tech Stack Standards
-- **[Next.js Docs](https://nextjs.org/docs)** - Official Next.js documentation
-- **[Tailwind CSS v4](https://tailwindcss.com)** - Styling guide
-- **[Groq API Docs](https://console.groq.com/docs)** - AI API reference
-- **[Upstash Docs](https://upstash.com/docs)** - Redis & Vector DB guide
+* **[PRD](https://www.google.com/search?q=docs/prd.md)** - Product Requirements & Acceptance Criteria
+* **[Agents](agents.md)** - AI Instructions & Tech Stack Standards
+* **[Next.js Docs](https://nextjs.org/docs)**
+* **[Prisma Docs](https://www.prisma.io/docs)**
+* **[Groq API Docs](https://console.groq.com/docs)**
 
 ## 🐛 Troubleshooting
 
-### Port 3000 Already in Use
+### Prisma Client Error
+
+If you see errors related to `@prisma/client`:
 
 ```bash
-# Kill process on port 3000 (Windows)
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
+npx prisma generate
 
-# Or use a different port
-npm run dev -- -p 3001
 ```
 
-### Env Variables Not Loading
+### Database Connection Issues
 
-- Ensure `.env.local` is in the project root (not in `src/`)
-- Restart dev server after updating `.env.local`
-- Check that variable names match exactly
+* Verify `DATABASE_URL` in `.env.local`.
+* Ensure your IP is allowed in Neon (or "Allow all IPs" for dev).
 
-### Build Fails with TypeScript Errors
+### Voice Not Working
 
-```bash
-# Run type check manually
-npx tsc --noEmit
-
-# Fix errors or add `// @ts-ignore` as last resort
-```
-
-### API Key Errors
-
-- Verify credentials are correct in `.env.local`
-- Check that Groq/Upstash services are active
-- For Groq: ensure you haven't exceeded rate limits
-- For Upstash: verify database is not paused
-
-## 📖 Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs) - Features and API
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/) - TypeScript reference
-- [Tailwind CSS](https://tailwindcss.com/docs) - Utility classes
-- [Groq API](https://console.groq.com/docs/speech-text) - LLM inference
+* Check browser microphone permissions.
+* Ensure you are using `https://` or `localhost`.
 
 ## 🤝 Contributing
 
@@ -336,17 +264,15 @@ npx tsc --noEmit
 3. Push to branch: `git push origin feature/your-feature`
 4. Open a Pull Request
 
-## 📄 License
-
-This project is part of the Digital Twin team research. Refer to the parent repository for licensing.
-
 ## ✅ Acceptance Criteria (From PRD)
 
-- ✅ Core digital twin runs successfully
-- ✅ At least one agent operates end-to-end
-- ✅ Repository includes PRD, README, and agent documentation
-- ⏳ Agent implementation (next phase)
+* ✅ Core digital twin runs successfully
+* ✅ Voice interaction enabled (Milestone 6)
+* ✅ Database persistence with Neon Postgres (Milestone 3)
+* ✅ Repository includes PRD, README, and agent documentation
 
 ---
 
-**Last Updated:** January 20, 2026 | **Version:** 0.1.0
+**Team 2** | Digital Twin Project | 2026
+
+
