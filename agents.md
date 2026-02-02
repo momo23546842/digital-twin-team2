@@ -148,12 +148,9 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - The AI represents a **professional digital twin**, not a general chatbot
 - Responses must be factual, neutral, and recruiter-facing
 - Accuracy and traceability take priority over persuasion
-<<<<<<< HEAD
 - All outputs should be explainable using MCP tool results or retrieved documents
-  
-=======
 - All outputs should be explainable using MCP tool results or retrieved documents
-0cf06c8 (ai: refine MCP instructions formatting in agents.md)
 
-<!-- AI-assisted commit test -->
+<!-- Task 4 PR validation -->
+
 
