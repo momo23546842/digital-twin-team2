@@ -5,6 +5,41 @@ import { setRedisValue } from "@/lib/redis";
 
 export const runtime = "nodejs";
 
+// Max chunk size for content (characters) - keep metadata under 48KB limit
+const MAX_CHUNK_SIZE = 2000;
+const MAX_METADATA_CONTENT = 1000; // Truncated content for metadata
+
+/**
+ * Split text into chunks for embedding
+ */
+function chunkText(text: string, chunkSize: number = MAX_CHUNK_SIZE): string[] {
+  const chunks: string[] = [];
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  let currentChunk = "";
+
+  for (const sentence of sentences) {
+    if (currentChunk.length + sentence.length > chunkSize && currentChunk) {
+      chunks.push(currentChunk.trim());
+      currentChunk = sentence;
+    } else {
+      currentChunk += (currentChunk ? " " : "") + sentence;
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+
+  // If no chunks created (no sentence boundaries), chunk by size
+  if (chunks.length === 0 && text.length > 0) {
+    for (let i = 0; i < text.length; i += chunkSize) {
+      chunks.push(text.slice(i, i + chunkSize));
+    }
+  }
+
+  return chunks.length > 0 ? chunks : [text];
+}
+
 /**
  * POST /api/ingest - Ingest documents and store as vector embeddings
  */
@@ -35,27 +70,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate embeddings for each document
-    const vectors = await Promise.all(
-      documents.map(async (doc: any) => {
-        const vector = await generateEmbeddings(doc.content);
-        return {
-          id: doc.id,
+    // Generate embeddings for each document (with chunking for large docs)
+    const allVectors: Array<{ id: string; vector: number[]; metadata: Record<string, unknown> }> = [];
+
+    for (const doc of documents) {
+      const chunks = chunkText(doc.content);
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const vector = await generateEmbeddings(chunk);
+        const chunkId = chunks.length > 1 ? `${doc.id}-chunk-${i}` : doc.id;
+
+        allVectors.push({
+          id: chunkId,
           vector,
           metadata: {
-            content: doc.content,
+            // Truncate content for metadata to stay under limit
+            content: chunk.slice(0, MAX_METADATA_CONTENT) + (chunk.length > MAX_METADATA_CONTENT ? "..." : ""),
             title: doc.title || doc.id,
             source: doc.source || "uploaded",
             userId,
+            documentId: doc.id,
+            chunkIndex: i,
+            totalChunks: chunks.length,
             ingestedAt: new Date().toISOString(),
-            ...doc.metadata,
           },
-        };
-      })
-    );
+        });
+      }
+    }
 
     // Upsert vectors to Upstash Vector DB
-    await upsertVectors(vectors);
+    await upsertVectors(allVectors);
 
     // Store ingestion metadata in Redis
     const ingestKey = `ingest:${userId}:${Date.now()}`;
@@ -72,9 +117,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: `Ingested ${documents.length} documents`,
+        message: `Ingested ${documents.length} documents (${allVectors.length} chunks)`,
         ingestId: ingestKey,
-        vectorCount: vectors.length,
+        vectorCount: allVectors.length,
       },
       { status: 201 }
     );
