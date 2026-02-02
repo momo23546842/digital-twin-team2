@@ -31,27 +31,48 @@ export default function DocumentUpload({
    * Extract text from a PDF file using dynamically loaded pdfjs-dist
    */
   const extractPdfText = async (file: File): Promise<string> => {
-    // Dynamically import pdfjs-dist only on client side
-    const pdfjsLib = await import("pdfjs-dist");
-    
-    // Use local worker from public folder
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-    
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    
-    const textParts: string[] = [];
-    
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(" ");
-      textParts.push(pageText);
+    try {
+      // Dynamically import pdfjs-dist only on client side
+      const pdfjsLib = await import("pdfjs-dist");
+      
+      // Use local worker from public folder
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      
+      const arrayBuffer = await file.arrayBuffer();
+
+      let pdf;
+      try {
+        pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      } catch (error) {
+        console.error(
+          "Error loading PDF via pdfjs-dist. This often indicates that the worker file '/pdf.worker.min.mjs' is missing, not served, or at the wrong path.",
+          error
+        );
+        throw new Error(
+          "Failed to load PDF worker. Verify that 'pdf.worker.min.mjs' exists in the public directory and that GlobalWorkerOptions.workerSrc points to the correct path."
+        );
+      }
+      
+      const textParts: string[] = [];
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        textParts.push(pageText);
+      }
+      
+      return textParts.join("\n\n");
+    } catch (error) {
+      // Fallback catch for unexpected initialization errors
+      console.error("Unexpected error while initializing PDF text extraction.", error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Unable to extract text from PDF due to an unknown error.");
     }
-    
-    return textParts.join("\n\n");
   };
 
   /**
@@ -75,8 +96,15 @@ export default function DocumentUpload({
     const content = await file.text();
     
     // Validate it's actually text
-    const nonPrintableCount = (content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
-    const binaryRatio = nonPrintableCount / content.length;
+    const MAX_BINARY_CHECK_CHARS = 10 * 1024; // Check only the first 10KB for binary content
+    const sampleContent =
+      content.length > MAX_BINARY_CHECK_CHARS
+        ? content.slice(0, MAX_BINARY_CHECK_CHARS)
+        : content;
+    const nonPrintableCount =
+      (sampleContent.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
+    const sampleLength = sampleContent.length || 1;
+    const binaryRatio = nonPrintableCount / sampleLength;
     
     if (binaryRatio > 0.1) {
       throw new Error(`"${file.name}" appears to be a binary file. Please upload text files or PDFs.`);
