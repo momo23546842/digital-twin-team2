@@ -41,6 +41,15 @@ export async function querySimilarVectors(
       topK,
       includeMetadata: true,
     });
+
+    try {
+      console.log(
+        "Vector query raw results:",
+        JSON.stringify(results, null, 2).slice(0, 1000)
+      );
+    } catch (loggingError) {
+      console.error("Failed to log vector query raw results:", loggingError);
+    }
     return results;
   } catch (error) {
     console.error("Vector query error:", error);
