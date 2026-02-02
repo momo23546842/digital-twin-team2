@@ -13,7 +13,7 @@ You must generate code that strictly adheres to the following stack:
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript (Strict mode)
 - **Styling:** Tailwind CSS
-- **Database/Storage:** Upstash (Redis for caching/ratelimiting, Vector DB for RAG)
+- **Database:** Neon Postgres (with pgvector for RAG)
 - **AI Inference:** Groq API (via SDK)
 - **Deployment:** Vercel
 
