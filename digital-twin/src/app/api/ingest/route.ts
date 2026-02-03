@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateEmbeddings } from "@/lib/embeddings";
-import { upsertVectors } from "@/lib/vector";
-import { setRedisValue } from "@/lib/redis";
+import { upsertVectors } from "@/lib/postgres";
+import { setDatabaseValue } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -99,12 +99,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Upsert vectors to Upstash Vector DB
+    // Upsert vectors to PostgreSQL
     await upsertVectors(allVectors);
 
-    // Store ingestion metadata in Redis
+    // Store ingestion metadata in PostgreSQL
     const ingestKey = `ingest:${userId}:${Date.now()}`;
-    await setRedisValue(
+    await setDatabaseValue(
       ingestKey,
       {
         documentCount: documents.length,
