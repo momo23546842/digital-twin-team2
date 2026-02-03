@@ -1,88 +1,97 @@
-import { NextRequest } from "next/server";
-import { groq } from "@/lib/groq";
-import { 
-  checkRateLimit, 
-  getRecentHistory, 
-  saveChatMessage, 
-  getDocuments 
-} from "@/lib/prisma";
-import { buildPersonaPrompt, buildMinimalPrompt, DEFAULT_PERSONA, type PersonaSettings } from "@/lib/persona";
-import type { ChatRequestPayload } from "@/types";
+import { NextRequest, NextResponse } from "next/server";
+import { callGroqChat } from "@/lib/groq";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { generateEmbeddings } from "@/lib/embeddings";
+import { querySimilarVectors } from "@/lib/postgres";
+import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 
 export const runtime = "nodejs";
 
-interface ExtendedChatPayload extends ChatRequestPayload {
-  personaSettings?: PersonaSettings;
-}
-
 /**
- * Get context from stored documents in Postgres
+ * Retrieve relevant context from vector database using RAG
  */
-async function getDocumentContext(userId: string): Promise<string> {
+async function getRAGContext(userMessage: string): Promise<string> {
   try {
-    const documents = await getDocuments(userId);
+    // Generate embedding for user message
+    const messageEmbedding = await generateEmbeddings(userMessage);
 
-    if (!documents || documents.length === 0) {
-      console.log("Context: No documents found");
+    // Query similar vectors
+    const results = await querySimilarVectors(messageEmbedding, 3);
+
+    if (!results || results.length === 0) {
+      console.log("RAG: No results found");
       return "";
     }
 
-    console.log("Context: Found", documents.length, "documents");
+    console.log("RAG: Found", results.length, "results");
 
-    // Build context from all documents
-    const contextParts = documents
-      .map((doc: { title: string | null; content: string }) => {
-        const title = doc.title || "Document";
-        const content = doc.content || "";
-        return `=== ${title} ===\n${content}`;
+    // Extract and format context from results
+    const contextParts = results
+      .map((result: any, index: number) => {
+        const metadata = result.metadata || {};
+        const content = metadata.content || metadata.title || "";
+        
+        console.log(`RAG result ${index}:`, {
+          hasMetadata: !!result.metadata,
+          contentType: typeof content,
+          contentLength: typeof content === "string" ? content.length : 0,
+          contentPreview: typeof content === "string" ? content.slice(0, 100) : "N/A",
+          score: result.score,
+        });
+        
+        // Ensure content is a valid string
+        if (typeof content !== "string" || content.length === 0) {
+          console.warn("Skipping empty or non-string metadata content");
+          return "";
+        }
+        
+        return content;
       })
       .filter((text: string) => text.length > 0);
 
     if (contextParts.length === 0) {
-      console.log("Context: No valid documents after filtering");
+      console.log("RAG: No valid context parts after filtering");
       return "";
     }
 
-    console.log("Context: Using", contextParts.length, "documents");
-    return contextParts.join("\n\n---\n\n");
+    console.log("RAG: Using", contextParts.length, "context parts");
+    return `\n\nRelevant context from knowledge base:\n${contextParts.join("\n---\n")}`;
   } catch (error) {
-    console.error("Document context retrieval error:", error);
+    console.error("RAG context retrieval error:", error);
     return "";
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Extract user ID for rate limiting and context
+    // Extract user ID for rate limiting
     const userId = req.headers.get("x-user-id") || "anonymous";
 
     // Rate limit check
-    const isAllowed = checkRateLimit(userId, 10, 60);
+    const isAllowed = await checkRateLimit(userId, 10, 60);
     if (!isAllowed) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded" }),
-        { status: 429, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
       );
     }
 
     // Parse request
-    const payload: ExtendedChatPayload = await req.json();
+    const payload: ChatRequestPayload = await req.json();
 
     if (!payload.messages || payload.messages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Messages array is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { error: "Messages array is required" },
+        { status: 400 }
       );
     }
 
-    const sessionId = payload.sessionId || `session-${Date.now()}`;
-    const personaSettings = payload.personaSettings;
-
-    // Get recent history from Postgres for context
-    await getRecentHistory(sessionId, 10);
-
-    // Get document context from Postgres
-    const documentContext = await getDocumentContext(userId);
+    // Get the latest user message for RAG context
+    const lastMessage = payload.messages[payload.messages.length - 1];
+    const ragContext =
+      lastMessage.role === "user"
+        ? await getRAGContext(lastMessage.content)
+        : "";
 
     // Format messages for Groq API
     const groqMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = payload.messages.map((msg) => ({
@@ -90,100 +99,59 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }));
 
-    // Build persona from document context with optional settings
-    const systemPrompt = documentContext
-      ? buildPersonaPrompt(DEFAULT_PERSONA, documentContext, personaSettings)
-      : buildMinimalPrompt();
+    // Add system message - Digital Twin persona
+    const systemPrompt = ragContext
+      ? `You ARE the person described in the following context. You are their Digital Twin - respond in FIRST PERSON as if you are them.
+
+Rules:
+- Speak as "I", "me", "my" - you ARE this person
+- Adopt their personality, tone, and communication style based on the context
+- Answer questions about yourself using the information provided
+- Be conversational and natural, as if chatting casually
+- If asked about experiences, skills, or background, draw from the context
+- If something isn't in the context, you can say "I don't think I've mentioned that" or make reasonable inferences
+- Be friendly, authentic, and personable - this is a conversation, not an interview
+
+Context about you (the person you're embodying):
+${ragContext}`
+      : `You are a Digital Twin assistant. No personal documents have been uploaded yet. 
+         Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.`;
 
     groqMessages.unshift({
       role: "system",
       content: systemPrompt,
     });
 
-    // Save user message to Postgres asynchronously
-    const lastMessage = payload.messages[payload.messages.length - 1];
-    if (lastMessage.role === "user") {
-      saveChatMessage(sessionId, "user", lastMessage.content).catch(console.error);
-    }
+    // Call Groq API
+    const response = await callGroqChat(groqMessages);
 
-    // Check if Groq is configured
-    if (!groq) {
-      return new Response(
-        `data: ${JSON.stringify({ text: "[Groq API key not configured]" })}\n\ndata: [DONE]\n\n`,
-        {
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-          },
-        }
-      );
-    }
-
-    // Create streaming response using Groq
-    const stream = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: groqMessages,
-      max_tokens: 1024,
-      temperature: 0.7,
-      stream: true,
-    });
-
-    // Create a TransformStream to convert Groq stream to SSE
-    const encoder = new TextEncoder();
-    let fullContent = "";
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of stream) {
-            const text = chunk.choices[0]?.delta?.content || "";
-            if (text) {
-              fullContent += text;
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ text })}\n\n`)
-              );
-            }
-          }
-
-          // Send done signal
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-
-          // Save assistant message after streaming completes
-          if (fullContent) {
-            saveChatMessage(sessionId, "assistant", fullContent).catch(console.error);
-          }
-        } catch (error) {
-          console.error("Streaming error:", error);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`)
-          );
-          controller.close();
-        }
+    // Build response
+    const responsePayload: ChatResponsePayload = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      message: {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        role: "assistant",
+        content: response,
+        timestamp: new Date(),
+        metadata: {
+          ragEnabled: !!ragContext,
+          contextCount: ragContext ? 3 : 0,
+        },
       },
-    });
+      sessionId: payload.sessionId || `session-${Date.now()}`,
+    };
 
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error("Chat API error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }
 
 // Health check
 export async function GET() {
-  return new Response(
-    JSON.stringify({ status: "ok", message: "Chat API is running" }),
-    { headers: { "Content-Type": "application/json" } }
-  );
+  return NextResponse.json({ status: "ok", message: "Chat API is running" });
 }
