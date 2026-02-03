@@ -4,17 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push",
-    "prisma:studio": "prisma studio"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.0",
     "class-variance-authority": "^0.7.1",
-    "framer-motion": "^12.30.0",
     "groq-sdk": "^0.37.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.6",
@@ -33,7 +28,6 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
-    "prisma": "^6.2.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
