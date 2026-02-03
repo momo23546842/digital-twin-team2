@@ -1,47 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateEmbeddings } from "@/lib/embeddings";
-import { upsertVectors } from "@/lib/vector";
-import { setRedisValue } from "@/lib/redis";
+import { saveDocument, getDocuments } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-// Max chunk size for content (characters) - keep metadata under 48KB limit
-const MAX_CHUNK_SIZE = 2000;
-const MAX_METADATA_CONTENT = 1000; // Truncated content for metadata
-
 /**
- * Split text into chunks for embedding
- */
-function chunkText(text: string, chunkSize: number = MAX_CHUNK_SIZE): string[] {
-  const chunks: string[] = [];
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  let currentChunk = "";
-
-  for (const sentence of sentences) {
-    if (currentChunk.length + sentence.length > chunkSize && currentChunk) {
-      chunks.push(currentChunk.trim());
-      currentChunk = sentence;
-    } else {
-      currentChunk += (currentChunk ? " " : "") + sentence;
-    }
-  }
-
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
-  }
-
-  // If no chunks created (no sentence boundaries), chunk by size
-  if (chunks.length === 0 && text.length > 0) {
-    for (let i = 0; i < text.length; i += chunkSize) {
-      chunks.push(text.slice(i, i + chunkSize));
-    }
-  }
-
-  return chunks.length > 0 ? chunks : [text];
-}
-
-/**
- * POST /api/ingest - Ingest documents and store as vector embeddings
+ * POST /api/ingest - Ingest documents and store in Postgres
  */
 export async function POST(req: NextRequest) {
   try {
@@ -70,56 +33,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate embeddings for each document (with chunking for large docs)
-    const allVectors: Array<{ id: string; vector: number[]; metadata: Record<string, unknown> }> = [];
-
+    // Save each document to Postgres
+    const savedDocs = [];
     for (const doc of documents) {
-      const chunks = chunkText(doc.content);
-
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        const vector = await generateEmbeddings(chunk);
-        const chunkId = chunks.length > 1 ? `${doc.id}-chunk-${i}` : doc.id;
-
-        allVectors.push({
-          id: chunkId,
-          vector,
-          metadata: {
-            // Truncate content for metadata to stay under limit
-            content: chunk.slice(0, MAX_METADATA_CONTENT) + (chunk.length > MAX_METADATA_CONTENT ? "..." : ""),
-            title: doc.title || doc.id,
-            source: doc.source || "uploaded",
-            userId,
-            documentId: doc.id,
-            chunkIndex: i,
-            totalChunks: chunks.length,
-            ingestedAt: new Date().toISOString(),
-          },
-        });
-      }
+      const savedDoc = await saveDocument({
+        userId,
+        title: doc.title || doc.id,
+        content: doc.content,
+        source: doc.source || "uploaded",
+      });
+      savedDocs.push(savedDoc);
     }
-
-    // Upsert vectors to Upstash Vector DB
-    await upsertVectors(allVectors);
-
-    // Store ingestion metadata in Redis
-    const ingestKey = `ingest:${userId}:${Date.now()}`;
-    await setRedisValue(
-      ingestKey,
-      {
-        documentCount: documents.length,
-        timestamp: new Date().toISOString(),
-        documents: documents.map((d: any) => ({ id: d.id, title: d.title })),
-      },
-      86400 * 7 // 7 days TTL
-    );
 
     return NextResponse.json(
       {
         success: true,
-        message: `Ingested ${documents.length} documents (${allVectors.length} chunks)`,
-        ingestId: ingestKey,
-        vectorCount: allVectors.length,
+        message: `Ingested ${documents.length} documents`,
+        documentCount: savedDocs.length,
       },
       { status: 201 }
     );
@@ -133,32 +63,30 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/ingest - List ingestion history
+ * GET /api/ingest - List ingested documents
  */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get("userId") || "anonymous";
+    
+    const documents = await getDocuments(userId);
 
     return NextResponse.json(
       {
-        message: "Use POST to ingest documents",
-        example: {
-          documents: [
-            {
-              id: "doc-1",
-              content: "Your document content here",
-              title: "Document Title",
-              source: "your-source",
-            },
-          ],
-        },
+        documents: documents.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          source: doc.source,
+          createdAt: doc.createdAt,
+        })),
+        count: documents.length,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Ingest GET error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch ingestion info" },
+      { error: "Failed to fetch documents" },
       { status: 500 }
     );
   }
