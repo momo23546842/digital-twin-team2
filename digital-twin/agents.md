@@ -140,6 +140,8 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - The AI must **not fabricate** candidate data
 - The AI must **not estimate job fit** without calling MCP tools
 - If MCP data is missing or unavailable, the AI must explicitly state this
+- If MCP tools fail or return no data, the agent must respond gracefully without crashing
+
 
 ---
 
