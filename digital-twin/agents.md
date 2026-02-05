@@ -150,6 +150,8 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - Accuracy and traceability take priority over persuasion
 - All outputs should be explainable using MCP tool results or retrieved documents
 - All outputs should be explainable using MCP tool results or retrieved documents
+- Responses must strictly follow PRD-defined scope and avoid speculative answers
+
 
 <!-- Task 4 PR validation -->
 
