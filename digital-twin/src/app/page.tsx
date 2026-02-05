@@ -1,5 +1,5 @@
-import ChatDashboard from "@/components/chat-dashboard/ChatDashboard";
+import ChatPane from "@/components/ChatPane";
 
 export default function Home() {
-  return <ChatDashboard />;
+  return <ChatPane />;
 }
