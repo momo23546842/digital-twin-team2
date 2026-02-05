@@ -117,7 +117,7 @@ The Digital Twin AI agent must always consult the following documents before gen
   Located at: `docs/implementation-plan.md`  
   Defines technical architecture, MCP integration flow, and system boundaries.
 
-If any instruction or user request conflicts with these documents, the agent must highlight the discrepancy and defer to the PRD.
+If a user request conflicts with these documents, the agent must clearly identify the conflict and defer to the PRD.
 
 ---
 
