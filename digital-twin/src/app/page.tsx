@@ -1,5 +1,5 @@
-import ChatPane from "@/components/ChatPane";
+import CareerChat from "@/components/career/CareerChat";
 
 export default function Home() {
-  return <ChatPane />;
+  return <CareerChat />;
 }
