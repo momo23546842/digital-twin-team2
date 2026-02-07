@@ -28,7 +28,7 @@ export function useChat() {
     timeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       timeoutRef.current = null;
-      // Here you would typically add the assistant's response to messages
+      // TODO: Integrate with actual message API to add assistant's response to messages
     }, TYPING_DELAY_MS);
   }, []);
 
