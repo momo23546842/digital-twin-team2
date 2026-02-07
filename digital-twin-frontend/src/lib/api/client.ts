@@ -3,6 +3,7 @@ import { API_BASE_URL, API_TIMEOUT } from "@/constants/api";
 
 class ApiClient {
   private client: AxiosInstance;
+  private onUnauthorizedCallback: (() => void) | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -33,11 +34,26 @@ class ApiClient {
         if (error.response?.status === 401) {
           // Handle unauthorized
           localStorage.removeItem("auth_token");
-          window.location.href = "/login";
+          
+          // Use the callback if set, otherwise fallback to window.location
+          if (this.onUnauthorizedCallback) {
+            this.onUnauthorizedCallback();
+          } else {
+            window.location.href = "/login";
+          }
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  /**
+   * Set a callback to handle unauthorized (401) responses.
+   * This allows using Next.js router for client-side navigation.
+   * @param callback Function to call on 401 responses
+   */
+  setOnUnauthorized(callback: () => void) {
+    this.onUnauthorizedCallback = callback;
   }
 
   async get<T>(url: string, config?: any) {
