@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api/client';
 
@@ -12,20 +12,14 @@ import { apiClient } from '@/lib/api/client';
 export function ApiClientProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
+  const handleUnauthorized = useCallback(() => {
+    router.push('/login');
+  }, [router]);
+
   useEffect(() => {
     // Set up the redirect callback to use Next.js router
-    apiClient.setOnUnauthorized(() => {
-      router.push('/login');
-    });
-
-    // Cleanup is not strictly necessary since we want this to persist,
-    // but we can reset to default behavior if needed
-    return () => {
-      apiClient.setOnUnauthorized(() => {
-        window.location.href = '/login';
-      });
-    };
-  }, [router]);
+    apiClient.setOnUnauthorized(handleUnauthorized);
+  }, [handleUnauthorized]);
 
   return <>{children}</>;
 }
