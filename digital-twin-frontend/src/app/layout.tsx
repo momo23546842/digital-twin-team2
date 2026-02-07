@@ -16,7 +16,13 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-space-grotesk bg-gradient-to-br from-purple-600 to-purple-700" suppressHydrationWarning>{children}</body>
+      <body
+        className="bg-gradient-to-br from-purple-600 to-purple-700"
+        style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }
