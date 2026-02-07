@@ -1,11 +1,11 @@
 import { apiClient } from "./client";
 import { API_ENDPOINTS } from "@/constants/api";
-import type { ChatMessageType, InsightType, UserType } from "@/types";
+import type { ChatMessageType, ChatResponsePayload, InsightType, UserType } from "@/types";
 
 // Chat endpoints
 export const chatApi = {
   sendMessage: (message: string) =>
-    apiClient.post(API_ENDPOINTS.CHAT, { content: message }),
+    apiClient.post<ChatResponsePayload>(API_ENDPOINTS.CHAT, { content: message }),
 
   getMessages: (sessionId: string) =>
     apiClient.get<ChatMessageType[]>(`${API_ENDPOINTS.CHAT_MESSAGES}?sessionId=${sessionId}`),

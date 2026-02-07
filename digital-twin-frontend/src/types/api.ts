@@ -8,6 +8,13 @@ export interface ChatMessageType {
   createdAt: Date;
 }
 
+export interface ChatResponsePayload {
+  id: string;
+  message: ChatMessageType;
+  sessionId: string;
+  agentId?: string;
+}
+
 export interface ChatSessionType {
   id: string;
   userId: string;
