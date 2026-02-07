@@ -9,7 +9,11 @@ interface ChatMessage {
   timestamp: string;
 }
 
-export function ChatMessages() {
+interface ChatMessagesProps {
+  isTyping?: boolean;
+}
+
+export function ChatMessages({ isTyping = false }: ChatMessagesProps) {
   const [messages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -25,8 +29,7 @@ export function ChatMessages() {
       role: 'user',
       timestamp: 'Just now',
     },
-  ])
-  const [isTyping] = useState(false);
+  ]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-white to-gray-50">
