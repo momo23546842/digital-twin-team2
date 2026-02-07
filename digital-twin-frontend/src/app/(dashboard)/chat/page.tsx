@@ -7,7 +7,7 @@ import { ChatInputArea } from '@/components/chat/ChatInputArea';
 import { useChat } from '@/hooks/useChat';
 
 export default function ChatPage() {
-  const { handleQuickAction, handleSendMessage } = useChat();
+  const { isTyping, handleQuickAction, handleSendMessage } = useChat();
   return (
     <>
       <Navigation />
@@ -62,7 +62,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages Area */}
-        <ChatMessages />
+        <ChatMessages isTyping={isTyping} />
 
         {/* Quick Actions */}
         <QuickActions onActionClick={handleQuickAction} />
