@@ -1,18 +1,25 @@
 'use client';
 
+import { useState } from 'react';
+
 export function ChatInputArea({
   onSendMessage,
 }: {
   onSendMessage: (message: string) => void;
 }) {
+  const [message, setMessage] = useState('');
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      onSendMessage(message);
+      setMessage('');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const input = e.currentTarget;
-      if (input.value.trim()) {
-        onSendMessage(input.value);
-        input.value = '';
-      }
+      handleSendMessage();
     }
   };
 
@@ -35,6 +42,8 @@ export function ChatInputArea({
             <input
               type="text"
               placeholder="Type your message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
               onKeyPress={handleKeyPress}
             />
@@ -52,7 +61,7 @@ export function ChatInputArea({
           </button>
 
           <button
-            onClick={() => {}}
+            onClick={handleSendMessage}
             className="p-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
