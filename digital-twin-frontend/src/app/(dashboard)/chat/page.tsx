@@ -5,19 +5,9 @@ import { ChatMessages } from '@/components/chat/ChatMessages';
 import { QuickActions } from '@/components/chat/QuickActions';
 import { ChatInputArea } from '@/components/chat/ChatInputArea';
 import { useChat } from '@/lib/hooks/useChat';
-import { useEffect } from 'react';
 
 export default function ChatPage() {
   const { messages, isLoading, sendMessage } = useChat();
-
-  // Initialize with a welcome message if no messages exist
-  // In production, this should be handled by the backend or chat initialization logic
-  useEffect(() => {
-    if (messages.length === 0) {
-      // Messages will be empty initially and loaded from the backend
-      // The useChat hook will handle fetching messages when needed
-    }
-  }, [messages.length]);
 
   const handleQuickAction = (action: string) => {
     console.log('Quick action:', action);
