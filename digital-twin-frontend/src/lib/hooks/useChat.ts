@@ -13,7 +13,10 @@ export function useChat() {
 
     try {
       const response = await chatApi.sendMessage(content);
-      setMessages((prev) => [...prev, response.data as ChatMessageType]);
+      // Extract the message from the ChatResponsePayload
+      if (response.data?.message) {
+        setMessages((prev) => [...prev, response.data.message]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
