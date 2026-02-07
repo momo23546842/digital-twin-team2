@@ -16,6 +16,8 @@ export function useChat() {
       // Extract the message from the ChatResponsePayload
       if (response.data?.message) {
         setMessages((prev) => [...prev, response.data.message]);
+      } else {
+        throw new Error("Invalid response format: missing message");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
