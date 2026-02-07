@@ -13,8 +13,8 @@ export function useChat() {
 
     // Create and add user message to the conversation immediately
     const userMessage: ChatMessageType = {
-      id: `temp-${Date.now()}`, // Temporary ID until server responds
-      userId: "current-user", // This should ideally come from auth context
+      id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, // Temporary ID with random suffix to avoid collisions
+      userId: "current-user", // TODO: Replace with actual userId from auth context
       content,
       role: "user",
       createdAt: new Date(),
