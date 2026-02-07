@@ -103,7 +103,6 @@ export default function InsightsPage() {
                 icon={metric.icon}
                 iconBgColor={metric.iconBgColor}
                 value={metric.value}
-                title={metric.title}
                 trend={metric.trend}
                 description={metric.description}
               />
