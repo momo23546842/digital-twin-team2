@@ -117,7 +117,7 @@ The Digital Twin AI agent must always consult the following documents before gen
   Located at: `docs/implementation-plan.md`  
   Defines technical architecture, MCP integration flow, and system boundaries.
 
-If any instruction or user request conflicts with these documents, the agent must highlight the discrepancy and defer to the PRD.
+If a user request conflicts with these documents, the agent must clearly identify the conflict and defer to the PRD.
 
 ---
 
@@ -140,6 +140,8 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - The AI must **not fabricate** candidate data
 - The AI must **not estimate job fit** without calling MCP tools
 - If MCP data is missing or unavailable, the AI must explicitly state this
+- If MCP tools fail or return no data, the agent must respond gracefully without crashing
+
 
 ---
 
@@ -150,6 +152,8 @@ The Digital Twin AI must use MCP tools as the **single source of truth** for can
 - Accuracy and traceability take priority over persuasion
 - All outputs should be explainable using MCP tool results or retrieved documents
 - All outputs should be explainable using MCP tool results or retrieved documents
+- Responses must strictly follow PRD-defined scope and avoid speculative answers
+
 
 <!-- Task 4 PR validation -->
 
