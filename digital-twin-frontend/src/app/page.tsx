@@ -1,5 +1,3 @@
-'use client';
-
 import Navigation from '@/components/layout/Navigation';
 import { HeroSection } from '@/components/dashboard/HeroSection';
 
