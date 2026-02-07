@@ -1,38 +1,27 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
-import { API_BASE_URL, API_TIMEOUT } from "@/constants/api";
+import { API_TIMEOUT } from "@/constants/api";
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
+      // Use the proxy API route instead of direct backend URL
+      baseURL: "/api/proxy",
       timeout: API_TIMEOUT,
       headers: {
         "Content-Type": "application/json",
       },
+      // Enable sending cookies with requests
+      withCredentials: true,
     });
-
-    // Request interceptor
-    this.client.interceptors.request.use(
-      (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem("auth_token");
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
 
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized
-          localStorage.removeItem("auth_token");
+          // Handle unauthorized - redirect to login
           window.location.href = "/login";
         }
         return Promise.reject(error);
