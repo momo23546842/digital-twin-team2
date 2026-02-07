@@ -55,9 +55,11 @@ digital-twin-frontend/
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Copy environment variables (macOS/Linux)
 cp .env.local.example .env.local
 
+# On Windows (PowerShell), run the following instead:
+# Copy-Item .env.local.example .env.local
 # Start development server
 npm run dev
 ```

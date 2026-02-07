@@ -4,14 +4,19 @@ import Navigation from '@/components/layout/Navigation';
 import { ChatMessages } from '@/components/chat/ChatMessages';
 import { QuickActions } from '@/components/chat/QuickActions';
 import { ChatInputArea } from '@/components/chat/ChatInputArea';
+import { useChat } from '@/lib/hooks/useChat';
 
 export default function ChatPage() {
+  const { messages, isLoading, sendMessage } = useChat();
+
   const handleQuickAction = (action: string) => {
     console.log('Quick action:', action);
+    sendMessage(action);
   };
 
   const handleSendMessage = (message: string) => {
     console.log('Message sent:', message);
+    sendMessage(message);
   };
 
   return (
@@ -68,7 +73,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages Area */}
-        <ChatMessages />
+        <ChatMessages messages={messages} isTyping={isLoading} />
 
         {/* Quick Actions */}
         <QuickActions onActionClick={handleQuickAction} />
