@@ -25,7 +25,6 @@ export default function InsightsPage() {
         </svg>
       ),
       iconBgColor: 'bg-blue-100',
-      title: 'Total Views',
       value: '1,234',
       trend: '+23%',
       description: 'Total Views',
@@ -42,7 +41,6 @@ export default function InsightsPage() {
         </svg>
       ),
       iconBgColor: 'bg-purple-100',
-      title: 'Engagement Rate',
       value: '67%',
       trend: '+12%',
       description: 'Engagement Rate',
@@ -59,7 +57,6 @@ export default function InsightsPage() {
         </svg>
       ),
       iconBgColor: 'bg-green-100',
-      title: 'Response Time',
       value: '< 1min',
       trend: '-15%',
       description: 'Response Time',
@@ -76,7 +73,6 @@ export default function InsightsPage() {
         </svg>
       ),
       iconBgColor: 'bg-orange-100',
-      title: 'Conversion Rate',
       value: '34%',
       trend: '+8%',
       description: 'Conversion Rate',
@@ -99,11 +95,10 @@ export default function InsightsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {metrics.map((metric) => (
               <StatCard
-                key={metric.title}
+                key={metric.description}
                 icon={metric.icon}
                 iconBgColor={metric.iconBgColor}
                 value={metric.value}
-                title={metric.title}
                 trend={metric.trend}
                 description={metric.description}
               />
