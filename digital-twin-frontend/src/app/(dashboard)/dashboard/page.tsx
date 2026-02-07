@@ -19,7 +19,6 @@ export default function DashboardPage() {
         </svg>
       ),
       iconBgColor: 'bg-gradient-to-br from-blue-50 to-blue-100',
-      title: 'Active Opportunities',
       value: 12,
       trend: '+23%',
       description: 'Active Opportunities',
@@ -36,7 +35,6 @@ export default function DashboardPage() {
         </svg>
       ),
       iconBgColor: 'bg-gradient-to-br from-purple-50 to-purple-100',
-      title: 'Conversations',
       value: 47,
       trend: '+12%',
       description: 'Conversations',
@@ -59,7 +57,6 @@ export default function DashboardPage() {
         </svg>
       ),
       iconBgColor: 'bg-gradient-to-br from-green-50 to-green-100',
-      title: 'Profile Views',
       value: 234,
       trend: '+45%',
       description: 'Profile Views',
@@ -76,7 +73,6 @@ export default function DashboardPage() {
         </svg>
       ),
       iconBgColor: 'bg-gradient-to-br from-orange-50 to-orange-100',
-      title: 'Scheduled Meetings',
       value: 5,
       trend: 'Tomorrow 2pm',
       trendColor: 'text-gray-600',
@@ -152,11 +148,10 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {stats.map((stat) => (
               <StatCard
-                key={stat.title}
+                key={stat.description}
                 icon={stat.icon}
                 iconBgColor={stat.iconBgColor}
                 value={stat.value}
-                title={stat.title}
                 trend={stat.trend}
                 trendColor={stat.trendColor}
                 description={stat.description}
