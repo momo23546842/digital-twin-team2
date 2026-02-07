@@ -11,11 +11,25 @@ export function useChat() {
     setIsLoading(true);
     setError(null);
 
+    // Create and add user message to the conversation immediately
+    const userMessage: ChatMessageType = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, // Temporary ID with random suffix to avoid collisions
+      userId: "current-user", // TODO: Replace with actual userId from auth context
+      content,
+      role: "user",
+      createdAt: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
     try {
       const response = await chatApi.sendMessage(content);
+      // Add assistant's response to the conversation
       setMessages((prev) => [...prev, response.data as ChatMessageType]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
+      // Remove the user message on error to avoid showing unsent messages
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
     } finally {
       setIsLoading(false);
     }
