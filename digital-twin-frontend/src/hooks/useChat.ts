@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+const TYPING_DELAY_MS = 2000;
+
 export function useChat() {
   const [isTyping, setIsTyping] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -13,15 +15,13 @@ export function useChat() {
     };
   }, []);
 
-  const handleQuickAction = useCallback((action: string) => {
-    console.log('Quick action:', action);
-    
+  const showTypingIndicator = useCallback(() => {
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     
-    // Simulate typing indicator when processing quick action
+    // Show typing indicator
     setIsTyping(true);
     
     // Simulate assistant response delay
@@ -29,27 +29,18 @@ export function useChat() {
       setIsTyping(false);
       timeoutRef.current = null;
       // Here you would typically add the assistant's response to messages
-    }, 2000);
+    }, TYPING_DELAY_MS);
   }, []);
+
+  const handleQuickAction = useCallback((action: string) => {
+    console.log('Quick action:', action);
+    showTypingIndicator();
+  }, [showTypingIndicator]);
 
   const handleSendMessage = useCallback((message: string) => {
     console.log('Message sent:', message);
-    
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    // Show typing indicator when message is sent
-    setIsTyping(true);
-    
-    // Simulate assistant response delay
-    timeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      timeoutRef.current = null;
-      // Here you would typically add the assistant's response to messages
-    }, 2000);
-  }, []);
+    showTypingIndicator();
+  }, [showTypingIndicator]);
 
   return {
     isTyping,
