@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from "axios";
 import { API_BASE_URL, API_TIMEOUT } from "@/constants/api";
 
 class ApiClient {
@@ -40,23 +40,23 @@ class ApiClient {
     );
   }
 
-  async get<T>(url: string, config?: any) {
+  async get<T>(url: string, config?: AxiosRequestConfig) {
     return this.client.get<T>(url, config);
   }
 
-  async post<T>(url: string, data?: any, config?: any) {
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig) {
     return this.client.post<T>(url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: any) {
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig) {
     return this.client.put<T>(url, data, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: any) {
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig) {
     return this.client.patch<T>(url, data, config);
   }
 
-  async delete<T>(url: string, config?: any) {
+  async delete<T>(url: string, config?: AxiosRequestConfig) {
     return this.client.delete<T>(url, config);
   }
 }
