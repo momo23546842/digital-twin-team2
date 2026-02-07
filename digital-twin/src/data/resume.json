@@ -1,0 +1,115 @@
+{
+  "name": "Prabhav Shrestha",
+  "title": "Full-Stack Software Engineer",
+  "email": "prabhavshrestha2005@gmail.com",
+  "phone": "+61 470490977",
+  "location": "San Francisco, CA",
+  "linkedin": "https://linkedin.com/in/prabhavshrestha",
+  "github": "https://github.com/prabhavshrst",
+  "website": "https://prabhavshrestha.dev",
+  "summary": "Passionate full-stack software engineer with 5+ years of experience building scalable web applications. Skilled in modern JavaScript/TypeScript ecosystems, cloud infrastructure, and agile development. Proven track record of delivering high-quality products in fast-paced startup environments.",
+
+  "skills": {
+    "languages": ["JavaScript", "TypeScript", "Python", "SQL", "HTML", "CSS"],
+    "frontend": ["React", "Next.js", "Tailwind CSS", "Redux", "Vue.js"],
+    "backend": ["Node.js", "Express", "FastAPI", "GraphQL", "REST APIs"],
+    "databases": ["PostgreSQL", "MongoDB", "Redis", "Prisma ORM"],
+    "cloud": ["AWS (EC2, S3, Lambda)", "Docker", "Kubernetes", "Vercel", "GitHub Actions"],
+    "tools": ["Git", "Figma", "Jira", "Postman", "VS Code"],
+    "other": ["Agile/Scrum", "CI/CD", "TDD", "System Design", "Technical Writing"]
+  },
+
+  "experience": [
+    {
+      "company": "TechCorp Inc.",
+      "title": "Senior Software Engineer",
+      "location": "San Francisco, CA",
+      "startDate": "2022-03",
+      "endDate": "present",
+      "highlights": [
+        "Led development of a real-time analytics dashboard serving 50K+ daily active users using React, Next.js, and PostgreSQL.",
+        "Designed and implemented a microservices architecture that reduced API response times by 40%.",
+        "Mentored a team of 4 junior developers through code reviews, pair programming, and technical design sessions.",
+        "Introduced automated testing pipelines with Jest and Cypress, increasing code coverage from 45% to 85%.",
+        "Collaborated with product and design teams to ship 12 major features in 2023."
+      ]
+    },
+    {
+      "company": "StartupXYZ",
+      "title": "Full-Stack Developer",
+      "location": "Remote",
+      "startDate": "2020-06",
+      "endDate": "2022-02",
+      "highlights": [
+        "Built the company's core SaaS platform from scratch using React, Node.js, and MongoDB.",
+        "Implemented Stripe payment integration handling $2M+ annual recurring revenue.",
+        "Developed a RESTful API consumed by web and mobile clients with 99.9% uptime.",
+        "Optimized database queries reducing page load times by 60%.",
+        "Managed AWS infrastructure including EC2, RDS, S3, and CloudFront."
+      ]
+    },
+    {
+      "company": "WebAgency Co.",
+      "title": "Junior Web Developer",
+      "location": "Los Angeles, CA",
+      "startDate": "2019-01",
+      "endDate": "2020-05",
+      "highlights": [
+        "Developed responsive websites for 15+ clients using HTML, CSS, JavaScript, and WordPress.",
+        "Created custom React components for an internal design system.",
+        "Collaborated with UX designers to translate Figma mockups into pixel-perfect interfaces.",
+        "Participated in agile sprints and daily stand-ups."
+      ]
+    }
+  ],
+
+  "education": [
+    {
+      "institution": "University of California, Berkeley",
+      "degree": "Bachelor of Science in Computer Science",
+      "graduationDate": "2018-12",
+      "gpa": "3.7",
+      "highlights": [
+        "Dean's List (6 semesters)",
+        "Senior thesis: 'Optimizing Real-Time Data Pipelines for Web Applications'",
+        "Teaching Assistant for CS 61A (Structure and Interpretation of Computer Programs)"
+      ]
+    }
+  ],
+
+  "projects": [
+    {
+      "name": "OpenBoard",
+      "description": "An open-source collaborative whiteboard app built with Next.js, Socket.IO, and Canvas API. 500+ GitHub stars.",
+      "technologies": ["Next.js", "Socket.IO", "Canvas API", "PostgreSQL"],
+      "url": "https://github.com/johndoe/openboard"
+    },
+    {
+      "name": "DevTracker",
+      "description": "A CLI tool for tracking developer productivity metrics across Git repositories. Published on npm with 1,000+ weekly downloads.",
+      "technologies": ["Node.js", "TypeScript", "CLI"],
+      "url": "https://github.com/johndoe/devtracker"
+    }
+  ],
+
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect – Associate",
+      "issuer": "Amazon Web Services",
+      "date": "2023-06"
+    },
+    {
+      "name": "Meta Front-End Developer Professional Certificate",
+      "issuer": "Meta / Coursera",
+      "date": "2022-01"
+    }
+  ],
+
+  "interests": [
+    "Open-source contributing",
+    "AI/ML and large language models",
+    "Rock climbing",
+    "Playing guitar",
+    "Board games"
+  ]
+}

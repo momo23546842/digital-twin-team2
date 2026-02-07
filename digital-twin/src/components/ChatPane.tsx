@@ -1,19 +1,19 @@
 "use client";
 
 import ChatInput from "@/components/ChatInput";
-import DocumentUpload from "@/components/DocumentUpload";
 import MessageList from "@/components/MessageList";
 import type { Message } from "@/types";
 import { Bot, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getResume } from "@/lib/resume";
 
 export default function ChatPane() {
+  const resume = getResume();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content:
-        "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them!",
+      content: `Hey there! I'm a digital twin of ${resume.name}. Feel free to ask me anything – about my work, the projects I've built, or anything else on my mind. What would you like to know?`,
       timestamp: new Date(),
     },
   ]);
@@ -120,9 +120,6 @@ export default function ChatPane() {
 
           {/* Bottom section inside bubble */}
           <div className="bg-white border-t border-gray-100">
-            {/* Document Upload */}
-            <DocumentUpload isLoading={isLoading} />
-
             {/* Input */}
             <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
           </div>

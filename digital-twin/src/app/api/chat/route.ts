@@ -1,66 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGroqChat } from "@/lib/groq";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { generateEmbeddings } from "@/lib/embeddings";
-import { querySimilarVectors } from "@/lib/postgres";
+import { getResumeContext } from "@/lib/resume";
 import { callMcpTool, listMcpTools } from "@/lib/mcp-client";
 import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 
 export const runtime = "nodejs";
 
-/**
- * Retrieve relevant context from vector database using RAG
- */
-async function getRAGContext(userMessage: string): Promise<string> {
-  try {
-    // Generate embedding for user message
-    const messageEmbedding = await generateEmbeddings(userMessage);
+// Cache the resume context string (it never changes at runtime)
+let cachedResumeContext: string | null = null;
 
-    // Query similar vectors
-    const results = await querySimilarVectors(messageEmbedding, 3);
-
-    if (!results || results.length === 0) {
-      console.log("RAG: No results found");
-      return "";
-    }
-
-    console.log("RAG: Found", results.length, "results");
-
-    // Extract and format context from results
-    const contextParts = results
-      .map((result: any, index: number) => {
-        const metadata = result.metadata || {};
-        const content = metadata.content || metadata.title || "";
-        
-        console.log(`RAG result ${index}:`, {
-          hasMetadata: !!result.metadata,
-          contentType: typeof content,
-          contentLength: typeof content === "string" ? content.length : 0,
-          contentPreview: typeof content === "string" ? content.slice(0, 100) : "N/A",
-          score: result.score,
-        });
-        
-        // Ensure content is a valid string
-        if (typeof content !== "string" || content.length === 0) {
-          console.warn("Skipping empty or non-string metadata content");
-          return "";
-        }
-        
-        return content;
-      })
-      .filter((text: string) => text.length > 0);
-
-    if (contextParts.length === 0) {
-      console.log("RAG: No valid context parts after filtering");
-      return "";
-    }
-
-    console.log("RAG: Using", contextParts.length, "context parts");
-    return `\n\nRelevant context from knowledge base:\n${contextParts.join("\n---\n")}`;
-  } catch (error) {
-    console.error("RAG context retrieval error:", error);
-    return "";
+function loadResumeContext(): string {
+  if (!cachedResumeContext) {
+    cachedResumeContext = getResumeContext();
   }
+  return cachedResumeContext;
 }
 
 /**
@@ -150,20 +104,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the latest user message for RAG context
+    // Get the latest user message for MCP context
     const lastMessage = payload.messages[payload.messages.length - 1];
 
-    // Fetch RAG context and MCP tool context in parallel
-    const [ragContext, mcpContext] = await Promise.all([
-      lastMessage.role === "user"
-        ? getRAGContext(lastMessage.content)
-        : Promise.resolve(""),
-      lastMessage.role === "user"
-        ? getMcpContext(lastMessage.content)
-        : Promise.resolve(""),
-    ]);
+    // Load resume context (always available from JSON file)
+    const resumeContext = loadResumeContext();
 
-    const combinedContext = ragContext + mcpContext;
+    // Fetch MCP tool context if needed
+    const mcpContext =
+      lastMessage.role === "user"
+        ? await getMcpContext(lastMessage.content)
+        : "";
+
+    const combinedContext = resumeContext + mcpContext;
 
     // Format messages for Groq API
     const groqMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = payload.messages.map((msg) => ({
@@ -171,9 +124,8 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }));
 
-    // Add system message - Digital Twin persona
-    const systemPrompt = combinedContext
-      ? `You ARE the person described in the following context. You are their Digital Twin - respond in FIRST PERSON as if you are them.
+    // Add system message - Digital Twin persona (resume is always available)
+    const systemPrompt = `You ARE the person described in the following resume. You are their Digital Twin - respond in FIRST PERSON as if you are them.
 
 Rules:
 - Speak as "I", "me", "my" - you ARE this person
@@ -184,10 +136,8 @@ Rules:
 - If something isn't in the context, you can say "I don't think I've mentioned that" or make reasonable inferences
 - Be friendly, authentic, and personable - this is a conversation, not an interview
 
-Context about you (the person you're embodying):
-${combinedContext}`
-      : `You are a Digital Twin assistant. No personal documents have been uploaded yet. 
-         Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.`;
+Your full resume and profile:
+${combinedContext}`;
 
     groqMessages.unshift({
       role: "system",
@@ -206,9 +156,8 @@ ${combinedContext}`
         content: response,
         timestamp: new Date(),
         metadata: {
-          ragEnabled: !!ragContext,
+          resumeLoaded: true,
           mcpEnabled: !!mcpContext,
-          contextCount: ragContext ? 3 : 0,
         },
       },
       sessionId: payload.sessionId || `session-${Date.now()}`,
