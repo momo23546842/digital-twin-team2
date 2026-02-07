@@ -93,11 +93,15 @@ async function handleRequest(
         // Try to refresh the token
         const refreshResponse = await fetch(`${request.nextUrl.origin}/api/auth/refresh`, {
           method: "POST",
+          headers: {
+            Cookie: request.headers.get("cookie") || "",
+          },
         });
 
         if (refreshResponse.ok) {
-          // Retry the original request with the new token
-          const newAuthToken = cookieStore.get("auth_token")?.value;
+          // Re-fetch cookies after refresh
+          const updatedCookieStore = await cookies();
+          const newAuthToken = updatedCookieStore.get("auth_token")?.value;
           if (newAuthToken) {
             headers.Authorization = `Bearer ${newAuthToken}`;
             const retryResponse = await fetch(url, {

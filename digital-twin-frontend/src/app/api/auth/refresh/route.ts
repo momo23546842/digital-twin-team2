@@ -24,9 +24,15 @@ export async function POST() {
     });
 
     if (!response.ok) {
-      // Clear cookies if refresh failed
-      cookieStore.delete("auth_token");
-      cookieStore.delete("refresh_token");
+      // Clear cookies if refresh failed, using the same attributes
+      cookieStore.delete({
+        name: "auth_token",
+        path: "/",
+      });
+      cookieStore.delete({
+        name: "refresh_token",
+        path: "/",
+      });
       return NextResponse.json(
         { error: "Token refresh failed" },
         { status: response.status }

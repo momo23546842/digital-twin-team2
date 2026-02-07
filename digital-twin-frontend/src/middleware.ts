@@ -28,11 +28,18 @@ export function middleware(request: NextRequest) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   
-  // Content Security Policy
-  response.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
-  );
+  // Strict Transport Security (HSTS) for HTTPS
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  }
+  
+  // Content Security Policy - More restrictive, adjust based on your needs
+  // Note: Next.js may require 'unsafe-inline' for styles in development
+  const csp = process.env.NODE_ENV === "production"
+    ? "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    : "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';";
+  
+  response.headers.set("Content-Security-Policy", csp);
 
   return response;
 }

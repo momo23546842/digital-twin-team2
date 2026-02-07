@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { AxiosInstance } from "axios";
 import { API_TIMEOUT } from "@/constants/api";
 
 class ApiClient {
@@ -15,18 +15,6 @@ class ApiClient {
       // Enable sending cookies with requests
       withCredentials: true,
     });
-
-    // Response interceptor
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          // Handle unauthorized - redirect to login
-          window.location.href = "/login";
-        }
-        return Promise.reject(error);
-      }
-    );
   }
 
   async get<T>(url: string, config?: any) {
