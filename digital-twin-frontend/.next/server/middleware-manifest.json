@@ -1,0 +1,53 @@
+{
+  "version": 3,
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge/chunks/42969_next_dist_esm_build_templates_edge-wrapper_c3446be3.js",
+        "server/edge/chunks/[root-of-the-server]__86e49abf._.js",
+        "server/edge/chunks/9e73b_next_dist_esm_build_templates_edge-wrapper_34d37e55.js"
+      ],
+      "name": "middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/dashboard(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/dashboard/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/chat(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/chat/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/insights(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/insights/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/settings(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/settings/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/login(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/login"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/signup(\\\\.json)?[\\/#\\?]?$",
+          "originalSource": "/signup"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "d1B97vXveSnPGupCyo9_w",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "keEKKJ3yj1h1eXh9Mam48tTCraLUkVAM1RvxM7Kxsfo=",
+        "__NEXT_PREVIEW_MODE_ID": "013db729b8c258df5a81ba85a6706d31",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "332366491211534bfbd49ffdf4f8f4a143df676cc9daa09cb29eefadc84f7958",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "538ea768c652afa7a2442707f37a5022d8a3ad4c2ac6d2d7a16c1d5af9a997db"
+      }
+    }
+  },
+  "sortedMiddleware": [
+    "/"
+  ],
+  "functions": {}
+}

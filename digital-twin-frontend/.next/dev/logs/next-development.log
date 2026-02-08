@@ -1,0 +1,19 @@
+[00:00:04.900] Server  LOG     ✓ Ready in 4.1s
+[00:00:15.642] Server  LOG     ○ Compiling /chat ...
+[00:00:18.402] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:18.862] Browser LOG     Navigation hydrated. User: null
+[00:00:18.862] Browser LOG     Loading auth from localStorage: {"token":true,"user":true}
+[00:00:18.862] Browser LOG     Auth loaded: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:18.862] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:20.358] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:20.358] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:21.438] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:21.438] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:31.772] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:31.772] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:32.681] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:32.681] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:45.536] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:00:45.536] Browser LOG     Navigation hydrated. User: {"email":"sami@gmail.com","id":"user_1770329478396","name":"sami dee"}
+[00:11:26.904] Server  LOG     ✓ Compiled in 534ms
+[00:12:01.262] Server  LOG     ✓ Compiled in 2.4s

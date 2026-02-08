@@ -1,0 +1,51 @@
+{
+  "sorted_middleware": [],
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge/chunks/42969_next_dist_fb5e380e._.js",
+        "server/edge/chunks/[root-of-the-server]__a52b9830._.js",
+        "server/edge/chunks/9e73b_next_dist_esm_build_templates_edge-wrapper_14c4039e.js"
+      ],
+      "name": "middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/dashboard/:path*{(\\\\.json)}?",
+          "originalSource": "/dashboard/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/chat/:path*{(\\\\.json)}?",
+          "originalSource": "/chat/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/insights/:path*{(\\\\.json)}?",
+          "originalSource": "/insights/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/settings/:path*{(\\\\.json)}?",
+          "originalSource": "/settings/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/login{(\\\\.json)}?",
+          "originalSource": "/login"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/signup{(\\\\.json)}?",
+          "originalSource": "/signup"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "development",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "1AufjE7PbE1tSZ4gwcSAihc5YS/oS8qLUGUy2m4vkJs=",
+        "__NEXT_PREVIEW_MODE_ID": "a03fe19990cc0f1b33fadca0329b4a46",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "81d3eb4aec75562adde4748e80188867694e856d10dbd2d967ecee0374fff1f2",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "bfa0cb671c4b6360d84617de5755ade3770ea3a1d52588fbbcdd3a5ce9e96e61"
+      }
+    }
+  },
+  "instrumentation": null,
+  "functions": {}
+}
