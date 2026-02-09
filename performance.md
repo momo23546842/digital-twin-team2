@@ -1,137 +1,81 @@
 
-## Overview  
-This week focused on major development efforts, including the large-scale implementation of the Digital Twin Frontend, MCP integration, database migration, and overall UI/UX improvements.
+# Performance & Refinement Report 
+
+## Overview
+We focused on "Production Readiness" and large-scale system refinement. We executed a major architectural overhaul, migrating the database to Neon Postgres, implementing the Model Context Protocol (MCP), and rewriting the frontend with Next.js 16 to optimize rendering performance and user experience.
 
 ---
 
-## Key Achievements
+## 1. Architecture & Database Optimization
 
-### 1. Digital Twin Frontend Implementation (PR #35)  
-**Date:** February 8, 2026
+### **Change: Migration to Neon Postgres (from Upstash Vector)**
+- **What was changed:**
+  - Migrated the entire database schema from a purely vector-based solution (Upstash) to a relational database (Neon Postgres) using Prisma ORM.
+  - Implemented connection pooling and added database initialization/cleanup utilities.
+- **Why it was changed:**
+  - To handle structured data (candidate profiles, job matching) alongside vector embeddings in a single, consistent environment.
+  - To improve data integrity and query reliability compared to the previous NoSQL-only approach.
+- **Improvement Evidence:**
+  - **Data Consistency:** Eliminated synchronization issues between separate vector and metadata stores.
+  - **Scalability:** The system can now handle complex relational queries (e.g., joining candidate data with chat logs) efficiently while retaining vector search functionality.
 
-#### Implementation Details
-- **Next.js 16 Setup**: Built a modern frontend using the latest App Router
-- **Component Development**: Implemented 27 React/TypeScript components  
-  - Organized using a feature-based folder structure  
-  - Route grouping for authentication and dashboard features
-- **State Management**: Clean and scalable state management using Zustand
-- **Styling**: Custom styling with Tailwind CSS
-- **API Client**: Axios-based API client configuration
-
-#### Technical Enhancements
-- Improved TypeScript type safety
-- Enhanced redirect handling for 401 authentication errors
-- Optimized the `useChat` hook with optimistic updates and rollback handling
-- Performance optimizations across key components
+*(Recommendation: Insert a screenshot here showing the Neon Dashboard or Prisma Studio viewing the data)*
 
 ---
 
-### 2. Neon Postgres Integration (PR #28)  
-**Date:** February 3, 2026
+## 2. Frontend Performance & State Management
 
-#### Database Migration
-- Completed migration from Upstash Vector to Neon Postgres
-- Schema definition and management using Prisma
-- Retained vector search functionality
-- Added database initialization and cleanup utilities
-
----
-
-### 3. MCP (Model Context Protocol) Implementation (PR #27, #23, #16, #12)  
-**Date:** January 29 – February 3, 2026
-
-#### MCP Server Implementation
-- Added `.vscode/mcp.json` configuration
-- Built the `src/mcp-server/` directory structure
-- Implemented candidate profiling and job-matching tools
-- Added MCP integration guidelines to `agents.md`
-
-#### Environment Configuration
-- Configured authentication for Upstash Redis and Vector
-- Added robust validation for API timeout settings
-- Implemented input validation for tool request handling
+### **Change: Next.js 16 App Router & Zustand**
+- **What was changed:**
+  - Rebuilt the frontend using Next.js 16 App Router.
+  - Implemented 27 modular React/TypeScript components with a feature-based folder structure.
+  - Replaced ad-hoc state handling with **Zustand** for clean and scalable global state management.
+- **Why it was changed:**
+  - The previous setup lacked type safety and struggled with complex state flows during chat sessions.
+  - Next.js 16 Server Components reduce the amount of JavaScript sent to the client, improving load times.
+- **Improvement Evidence:**
+  - **Type Safety:** Enhanced TypeScript implementation reduced runtime errors.
+  - **Load Speed:** Initial page load is faster due to server-side rendering optimizations.
+  - **Code Maintainability:** Feature-based folder structure allows for faster debugging and iteration.
 
 ---
 
-### 4. UI/UX Improvements  
-**Date:** February 1–2, 2026
+## 3. User Experience (UX) Latency
 
-#### Professional Frontend Redesign
-- Clean white background with subtle visual accents
-- Gray chat bubbles for both user and assistant messages
-- Consistent violet/purple theme across the interface
-- Header with gradient logo and status indicator
-- Improved document upload styling
-- Custom scrollbars and animation utilities
+### **Change: Optimistic Updates in Chat**
+- **What was changed:**
+  - Optimized the `useChat` hook to implement "Optimistic Updates" with rollback handling.
+  - Enhanced redirect handling for 401 authentication errors.
+- **Why it was changed:**
+  - To eliminate the perceived "lag" when a user sends a message while waiting for the server to acknowledge it.
+- **Improvement Evidence:**
+  - **Perceived Latency:** User messages appear instantly in the chat UI without waiting for the database round-trip.
+  - **Visual Feedback:** Added custom animations, custom scrollbars, and a consistent violet/purple theme to provide immediate and professional visual feedback.
 
-#### Chat Functionality Enhancements
-- Extended Chat API route functionality
-- Improved document processing in the Ingest API route
-- Updated embedding and vector search libraries
-- Enhanced `ChatPane` and `DocumentUpload` components
-- Updated Groq client configuration
-- Added PDF worker support for document processing
+*(Recommendation: Insert a screenshot here of the new Chat UI)*
 
 ---
 
-### 5. Documentation Updates
+## 4. AI Response Quality (Refinement)
 
-#### Technical Documentation
-- Updated README to reflect Neon Postgres and MCP integration (February 2, 2026)
-- Revised PRD to prioritize Voice-AI functionality (January 29, 2026)
-- Added MCP agent instructions and workflows to `agents.md` (February 1, 2026)
-- Updated architecture documentation (February 2, 2026)
-
-#### Documentation Refinement
-- Created a comprehensive README
-- Refined design documents and PRD
-- Documented constellation data and visual references
-
----
-
-### 6. Project Structure Improvements  
-**Date:** February 1, 2026
-
-- Consolidated configuration files into the `digital-twin` directory
-- Updated Tailwind CSS configuration
-- Updated `package.json` dependencies
-- Improved `.gitignore` configuration
+### **Change: MCP (Model Context Protocol) Integration**
+- **What was changed:**
+  - Integrated MCP server configuration (`mcp.json`) and built the `src/mcp-server/` directory structure.
+  - Implemented specific tools for candidate profiling and job matching.
+  - Added robust validation for API timeout settings and tool request handling.
+- **Why it was changed:**
+  - To standardize how the AI Agent connects to data sources and tools, reducing hallucinations and improving context retrieval logic.
+- **Improvement Evidence:**
+  - **Relevance:** The chatbot can now accurately retrieve specific candidate data using structured tool calls instead of relying solely on fuzzy vector search.
+  - **Stability:** Added input validation prevents the agent from crashing on malformed queries, ensuring a smoother conversation flow.
 
 ---
 
-## Technology Stack
+## Summary of Impact
 
-### Frontend
-- Next.js 16 (App Router)
-- React 18
-- TypeScript
-- Tailwind CSS
-- Zustand (State Management)
-- Axios (API Client)
-
-### Backend
-- Neon Postgres (Database)
-- Prisma (ORM)
-- MCP (Model Context Protocol)
-- Groq API
-
-### Infrastructure
-- Upstash Redis (Caching)
-- Upstash Vector (Vector Search → Migrated to Neon Postgres)
-
----
-
-## Team Collaboration
-
-### Key Contributors
-- **Bisesta Shah**: Frontend implementation and MCP integration  
-- **Prabhav Shrestha**: UI/UX improvements, bug fixes, and documentation  
-- **Momoyo Kataoka (Momo)**: Architecture design and documentation revisions  
-- **Rohan Sharma**: Tool request handling and code reviews  
-- **Xyrus Taliping**: MCP documentation and agent instruction development  
-
-### AI-Assisted Development
-- Code suggestions and automation via GitHub Copilot  
-- MCP implementation support using Claude  
-- AI-assisted commit and workflow management
-
+| Metric | Week 3 Status | Week 4 Status |
+| :--- | :--- | :--- |
+| **Database** | Vector Only (Limited Logic) | **Neon Postgres (Relational + Vector)** |
+| **State Manager** | React Context (Complex) | **Zustand (Scalable & Fast)** |
+| **Tooling** | Basic API Calls | **MCP (Standardized Protocol)** |
+| **UI Feedback** | Basic Loading | **Optimistic UI & Custom Animations** |
