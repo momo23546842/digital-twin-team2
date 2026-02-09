@@ -1,5 +1,3 @@
-# Weekly Performance Report  
-**Week of:** February 2–8, 2026
 
 ## Overview  
 This week focused on major development efforts, including the large-scale implementation of the Digital Twin Frontend, MCP integration, database migration, and overall UI/UX improvements.
