@@ -3,9 +3,10 @@
 import ChatInput from "@/components/ChatInput";
 import DocumentUpload from "@/components/DocumentUpload";
 import MessageList from "@/components/MessageList";
+import VoiceChat from "@/components/VoiceChat";
 import type { Message } from "@/types";
 import { Bot, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function ChatPane() {
   const [messages, setMessages] = useState<Message[]>([
@@ -13,19 +14,30 @@ export default function ChatPane() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them!",
+        "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them! You can also use voice - just click 'Start Call' to have a conversation.",
       timestamp: new Date(),
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
+  
+  // Voice-related state
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(true);
+  const [lastAssistantMessage, setLastAssistantMessage] = useState<string>("");
 
   useEffect(() => {
     // Initialize session ID
     setSessionId(`session-${Date.now()}`);
   }, []);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, inputMethod: 'text' | 'voice' = 'text') => {
+    console.log('[ChatPane] handleSendMessage called:', { content, inputMethod });
+    
+    if (!content.trim()) {
+      console.log('[ChatPane] Empty content, skipping');
+      return;
+    }
+
     // Add user message
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -38,6 +50,8 @@ export default function ChatPane() {
     setIsLoading(true);
 
     try {
+      console.log('[ChatPane] Sending to /api/chat...');
+      
       // Call chat API
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -51,19 +65,49 @@ export default function ChatPane() {
             { role: "user", content },
           ],
           sessionId,
+          input_method: inputMethod,
         }),
       });
 
+      console.log('[ChatPane] Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        console.error("API Error Response:", errorData);
-        throw new Error(`API error: ${errorData.error || response.statusText}`);
+        // Read response text for better error details
+        const responseText = await response.text();
+        let errorMessage = `HTTP ${response.status}`;
+        
+        // Try to parse as JSON for structured error
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error('[ChatPane] API Error:', {
+            status: response.status,
+            error: errorData,
+            details: errorData.details,
+          });
+        } catch {
+          // Not JSON, log raw text
+          console.error('[ChatPane] API Error (raw):', {
+            status: response.status,
+            body: responseText.substring(0, 500),
+          });
+          errorMessage = responseText.substring(0, 100) || `Server error (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('[ChatPane] Got response:', data);
 
       // Add assistant message
       setMessages((prev) => [...prev, data.message]);
+      
+      // Set last assistant message for TTS (voice output)
+      if (autoSpeak && data.message?.content) {
+        console.log('[ChatPane] Setting message for TTS:', data.message.content.substring(0, 50) + '...');
+        setLastAssistantMessage(data.message.content);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
@@ -77,7 +121,13 @@ export default function ChatPane() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [messages, sessionId, autoSpeak]);
+
+  // Handle voice transcript from VoiceChat component
+  const handleVoiceTranscript = useCallback((text: string, inputMethod: 'voice') => {
+    console.log('[ChatPane] Voice transcript received:', text);
+    handleSendMessage(text, inputMethod);
+  }, [handleSendMessage]);
 
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-white">
@@ -125,8 +175,20 @@ export default function ChatPane() {
             {/* Document Upload */}
             <DocumentUpload isLoading={isLoading} />
 
+            {/* Voice Chat Controls */}
+            <div className="px-4 py-3 border-t border-gray-100">
+              <VoiceChat
+                onTranscript={handleVoiceTranscript}
+                textToSpeak={lastAssistantMessage}
+                isEnabled={true}
+                autoSpeak={autoSpeak}
+                onAutoSpeakChange={setAutoSpeak}
+                language="en-US"
+              />
+            </div>
+
             {/* Input */}
-            <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+            <ChatInput onSubmit={(content) => handleSendMessage(content, 'text')} isLoading={isLoading} />
           </div>
         </div>
       </div>

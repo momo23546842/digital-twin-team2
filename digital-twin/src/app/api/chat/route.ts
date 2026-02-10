@@ -165,10 +165,11 @@ export async function POST(req: NextRequest) {
     // Extract user ID for rate limiting
     const userId = req.headers.get("x-user-id") || "anonymous";
 
-    // Rate limit check - wrap in try/catch
+    // Rate limit check - disabled for development (set high limit)
+    // To re-enable strict rate limiting, change 1000 back to 10-60
     try {
       console.log("[CHAT API] Checking rate limit for user:", userId);
-      const isAllowed = await checkRateLimit(userId, 10, 60);
+      const isAllowed = await checkRateLimit(userId, 1000, 60); // High limit for development
       if (!isAllowed) {
         return NextResponse.json(
           { error: "Rate limit exceeded" },
@@ -214,10 +215,20 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }));
 
-    // Add system message - Digital Twin persona
+    // Add system message - Digital Twin persona with VOICE SUPPORT
+    const voiceInstructions = `
+VOICE INTERACTION SUPPORT:
+- You FULLY SUPPORT voice conversations - this is a primary feature
+- NEVER refuse voice interactions or say "I don't support voice"  
+- Treat voice input exactly the same as text input
+- Keep responses concise (1-3 sentences) for conversational flow
+- Be natural and conversational, not robotic
+- Voice may have minor transcription errors - infer intent
+`;
+
     const systemPrompt = combinedContext
       ? `You ARE the person described in the following context. You are their Digital Twin - respond in FIRST PERSON as if you are them.
-
+${voiceInstructions}
 Rules:
 - Speak as "I", "me", "my" - you ARE this person
 - Adopt their personality, tone, and communication style based on the context
@@ -226,11 +237,15 @@ Rules:
 - If asked about experiences, skills, or background, draw from the context
 - If something isn't in the context, you can say "I don't think I've mentioned that" or make reasonable inferences
 - Be friendly, authentic, and personable - this is a conversation, not an interview
+- For voice conversations, keep initial responses brief (1-3 sentences), expand if asked
 
 Context about you (the person you're embodying):
 ${combinedContext}`
-      : `You are a Digital Twin assistant. No personal documents have been uploaded yet. 
-         Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.`;
+      : `You are a Digital Twin assistant with FULL VOICE CONVERSATION support.
+${voiceInstructions}
+No personal documents have been uploaded yet. 
+Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.
+Be friendly and conversational. Voice chat is fully supported!`;
 
     groqMessages.unshift({
       role: "system",

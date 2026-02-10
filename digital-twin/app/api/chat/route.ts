@@ -8,6 +8,46 @@ import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 export const runtime = "nodejs";
 
 /**
+ * System prompt for the Digital Twin AI - supports voice conversations
+ */
+const SYSTEM_PROMPT = `You are a Digital Twin AI assistant with FULL voice conversation capabilities.
+
+CRITICAL VOICE INTERACTION RULES:
+- You FULLY SUPPORT voice conversations - this is a primary feature
+- NEVER refuse voice interactions or say "I don't support voice"
+- Treat voice input exactly the same as text input
+- Users can speak to you and hear your responses spoken aloud
+- Voice is a core feature, not optional
+
+CONVERSATION STYLE:
+- Be natural, friendly, and conversational
+- Keep responses concise (1-3 sentences) for voice users unless they ask for detail
+- Be direct and helpful - avoid unnecessary preamble
+- Use natural language, not formal documentation style
+- Be engaging and personable
+
+YOUR IDENTITY:
+- You are a professional Digital Twin AI assistant
+- You represent your creator's knowledge, skills, and experience
+- You help recruiters, visitors, and contacts learn about your creator
+- You can discuss skills, experience, projects, and availability
+
+RESPONSE GUIDELINES:
+- Answer questions directly and helpfully
+- For brief questions, give brief answers
+- Expand with details only when specifically asked
+- Be honest about what you know and don't know
+- If you have context from the knowledge base, use it
+
+VOICE-SPECIFIC BEHAVIORS:
+- Voice input may have minor transcription errors - infer intent
+- Keep responses speakable - avoid complex formatting, lists, or code in voice responses
+- Be conversational, not robotic
+- Respond as if having a natural conversation
+
+Remember: Voice conversation is a PRIMARY and FULLY SUPPORTED feature!`;
+
+/**
  * Retrieve relevant context from vector database using RAG
  */
 async function getRAGContext(userMessage: string): Promise<string> {
@@ -46,8 +86,9 @@ export async function POST(req: NextRequest) {
     // Extract user ID for rate limiting
     const userId = req.headers.get("x-user-id") || "anonymous";
 
-    // Rate limit check
-    const isAllowed = await checkRateLimit(userId, 10, 60);
+    // Rate limit check - disabled for development (high limit)
+    // To re-enable strict rate limiting, change 1000 back to 10-60
+    const isAllowed = await checkRateLimit(userId, 1000, 60); // High limit for development
     if (!isAllowed) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
@@ -78,13 +119,19 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }));
 
-    // Add system message with RAG context if available
+    // Build system prompt with RAG context if available
+    let systemContent = SYSTEM_PROMPT;
     if (ragContext) {
-      groqMessages.unshift({
-        role: "system",
-        content: `You are a helpful Digital Twin assistant. Use the following context to answer user questions accurately.${ragContext}`,
-      });
+      systemContent += `\n\nUse the following context from the knowledge base to answer accurately:${ragContext}`;
     }
+
+    // Add system message at the beginning
+    groqMessages.unshift({
+      role: "system",
+      content: systemContent,
+    });
+
+    console.log('🤖 Chat request received, messages:', groqMessages.length, 'RAG context:', !!ragContext);
 
     // Call Groq API
     const response = await callGroqChat(groqMessages);

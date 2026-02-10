@@ -192,12 +192,18 @@ async function initializeAppTables(client: PoolClient) {
       role TEXT NOT NULL,
       content TEXT NOT NULL,
       voice_url TEXT,
+      input_method VARCHAR(10) DEFAULT 'text',
+      voice_transcript TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
   await client.query(`
     CREATE INDEX IF NOT EXISTS messages_conversation_idx ON messages(conversation_id);
+  `);
+  
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS messages_input_method_idx ON messages(input_method);
   `);
 
   // Contacts table

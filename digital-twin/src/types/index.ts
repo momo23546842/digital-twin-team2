@@ -35,6 +35,8 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   voice_url?: string;
+  input_method?: 'text' | 'voice';
+  voice_transcript?: string;
   timestamp?: Date;
   created_at?: Date;
   metadata?: Record<string, any>;

@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar, Settings, LogOut, History } from 'lucide-react';
 import MessageList from '@/components/MessageListEnhanced';
 import ChatInputEnhanced from '@/components/ChatInputEnhanced';
 import ContactForm from '@/components/ContactForm';
+import VoiceChat from '@/components/VoiceChat';
 import { useAuth } from '@/lib/auth-context';
 import type { Message, Conversation } from '@/types';
+
+// Extended message type with input method tracking
+interface ExtendedMessage extends Message {
+  input_method?: 'text' | 'voice';
+  voice_transcript?: string;
+}
 
 interface ChatPageProps {
   initialSessionId?: string;
@@ -14,7 +21,7 @@ interface ChatPageProps {
 
 export default function ChatPage({ initialSessionId }: ChatPageProps) {
   const { logout, user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ExtendedMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
@@ -29,6 +36,10 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
   const [showContactForm, setShowContactForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatHistory, setChatHistory] = useState<Conversation[]>([]);
+  
+  // Voice-related state
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(true);
+  const [lastAssistantMessage, setLastAssistantMessage] = useState<string>('');
 
   // Initialize session
   useEffect(() => {
@@ -79,21 +90,34 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     fetchHistory();
   }, []);
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim() || !conversationId) return;
+  const handleSendMessage = useCallback(async (content: string, inputMethod: 'text' | 'voice' = 'text') => {
+    console.log('[ChatPage] handleSendMessage called:', { content, inputMethod, conversationId });
+    
+    if (!content.trim()) {
+      console.log('[ChatPage] Empty content, skipping');
+      return;
+    }
+    if (!conversationId) {
+      console.log('[ChatPage] No conversationId yet, skipping');
+      return;
+    }
 
-    // Add user message to state
-    const userMessage: Message = {
+    // Add user message to state with input method tracking
+    const userMessage: ExtendedMessage = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content,
       timestamp: new Date(),
+      input_method: inputMethod,
+      voice_transcript: inputMethod === 'voice' ? content : undefined,
     };
 
+    console.log('[ChatPage] Adding user message:', userMessage);
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
+      console.log('[ChatPage] Sending to /api/chat...');
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,20 +125,55 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
           messages: [...messages, userMessage],
           session_id: sessionId,
           conversation_id: conversationId,
+          input_method: inputMethod,
         }),
       });
 
+      console.log('[ChatPage] Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to get response');
+        // Read response text for better error details
+        const responseText = await response.text();
+        let errorMessage = `HTTP ${response.status}`;
+        
+        // Try to parse as JSON for structured error
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error('[ChatPage] API Error:', {
+            status: response.status,
+            error: errorData,
+            details: errorData.details,
+          });
+        } catch {
+          // Not JSON, log raw text
+          console.error('[ChatPage] API Error (raw):', {
+            status: response.status,
+            body: responseText.substring(0, 500),
+          });
+          errorMessage = responseText.substring(0, 100) || `Server error (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('[ChatPage] Got response:', data);
 
-      // Add assistant message
-      setMessages((prev) => [...prev, data.message]);
+      // Add assistant message and set for TTS
+      const assistantMessage: ExtendedMessage = {
+        ...data.message,
+        input_method: 'text', // AI responses are always text
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      
+      // Set last assistant message for TTS (only for voice input or if auto-speak is on)
+      if (autoSpeak) {
+        console.log('[ChatPage] Setting message for TTS:', data.message.content.substring(0, 50) + '...');
+        setLastAssistantMessage(data.message.content);
+      }
 
-      // Track event
+      // Track event with input method
       await fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,12 +183,13 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
           event_data: {
             message_length: content.length,
             response_length: data.message.content.length,
+            input_method: inputMethod,
           },
         }),
       }).catch(console.error);
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: Message = {
+      console.error('[ChatPage] Error sending message:', error);
+      const errorMessage: ExtendedMessage = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
         content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
@@ -139,7 +199,13 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [conversationId, messages, sessionId, autoSpeak]);
+
+  // Handle voice transcript from VoiceChat component
+  const handleVoiceTranscript = useCallback((text: string, inputMethod: 'voice') => {
+    console.log('[ChatPage] Voice transcript received:', text);
+    handleSendMessage(text, inputMethod);
+  }, [handleSendMessage]);
 
   const startNewChat = () => {
     setMessages([
@@ -243,8 +309,21 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
           {/* Messages */}
           <div className="flex-1 flex flex-col bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
             <MessageList messages={messages} isLoading={isLoading} />
+            
+            {/* Voice Chat Controls */}
+            <div className="border-t border-slate-700 p-4">
+              <VoiceChat
+                onTranscript={handleVoiceTranscript}
+                textToSpeak={lastAssistantMessage}
+                isEnabled={true}
+                autoSpeak={autoSpeak}
+                onAutoSpeakChange={setAutoSpeak}
+                language="en-US"
+              />
+            </div>
+            
             <ChatInputEnhanced
-              onSendMessage={handleSendMessage}
+              onSendMessage={(content) => handleSendMessage(content, 'text')}
               isLoading={isLoading}
               disabled={!conversationId}
             />
