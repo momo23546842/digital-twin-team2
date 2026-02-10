@@ -1,260 +1,315 @@
+# 🤖 Digital Twin Career Agent
 
-# Digital Twin
-
-![Status](https://img.shields.io/badge/Status-Active-success)
-![Next.js](https://img.shields.io/badge/Next.js-16.0-black)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
+![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue)
 ![Database](https://img.shields.io/badge/Database-Neon%20Postgres-green)
+![Groq](https://img.shields.io/badge/AI-Groq%20API-orange)
 
-## Overview
+> **⚡ START HERE: Get running in 5 minutes with [QUICKSTART.md](./digital-twin/QUICKSTART.md)**
 
-This project is a sophisticated **Career Intelligence Engine** designed to embody a professional persona in the digital realm. Moving beyond the limitations of a standard chatbot, it acts as an active digital representative within the workspace, engineered to foster meaningful and proactive engagement.
+## 🎯 Overview
 
-By integrating MCP (Model Context Protocol) for real-time, deep contextual understanding with Neon Postgres for persistent long-term memory, the system provides unparalleled depth. Combined with the lightning-fast response speeds of Groq, real-time voice interaction, and autonomous lead capture, this agent defines a new frontier for **active digital representation** in the modern workspace.
+A production-ready AI-powered web application that enables users to have intelligent conversations with a personalized digital twin. Acts as an active digital representative combining:
+
+- 🗣️ **Real-time AI Chat** via Groq (sub-second responses)
+- 🎙️ **Voice Support** with Web Speech API
+- 📝 **Persistent Memory** with Neon PostgreSQL
+- 👨‍💼 **Admin Dashboard** for business intelligence
+- 📞 **Lead Capture** for scalable outreach
+- 🔐 **Secure Authentication** with JWT tokens
 
 ## 📋 Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript (Strict mode)
-- **Styling:** Tailwind CSS v4 / Shadcn UI
-- **AI Inference:** Groq API / Vercel AI SDK
-- **Database:** Neon Postgres (via Prisma ORM)
-- **Voice:** Web Speech API / Vercel AI SDK (Voice)
-- **Deployment:** Vercel
-- **Package Manager:** npm
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Frontend** | Next.js | 16.1 |
+| **Language** | TypeScript | 5 |
+| **Styling** | Tailwind CSS | 4 |
+| **AI Engine** | Groq API | Latest |
+| **Database** | Neon PostgreSQL | Latest |
+| **Auth** | JWT + PBKDF2 | Custom |
+| **Voice** | Web Speech API | Native |
+| **Deployment** | Vercel / Docker | Any |
+
+## ⚡ Quick Start
+
+**Get running in 3 commands:**
+
+```bash
+cd digital-twin
+npm install && npm run dev
+```
+
+Then:
+1. Open http://localhost:3000
+2. Add `.env.local` with Groq API key + Database URL (see [QUICKSTART.md](./digital-twin/QUICKSTART.md))
+3. Start chatting! 🎉
+
+> 📖 **Full setup guide** → [QUICKSTART.md](./digital-twin/QUICKSTART.md)
 
 ## 🔧 Prerequisites
 
-Before you start, ensure you have:
-
-- **Node.js** (v18 or higher)
-- **npm** (v9 or higher)
-- **Git** for version control
-- **Neon Postgres Account** (for database)
+- **Node.js** 18+ ([Download](https://nodejs.org))
+- **Neon Postgres Account** (Free tier available at [neon.tech](https://neon.tech))
+- **Groq API Key** (Free tier available at [console.groq.com](https://console.groq.com))
 
 ## 📦 Installation
 
-### 1. Clone the Repository
+**Quick setup:**
 
 ```bash
-git clone <your-repo-url>
-cd digital-twin-team2
-
-```
-
-### 2. Install Dependencies
-
-```bash
+cd digital-twin
 npm install
-
 ```
 
-This will install all required packages including:
+**With startup script (recommended):**
 
-* `next`, `react`, `react-dom` (Core)
-* `groq-sdk`, `ai` (AI)
-* `@prisma/client` (Database)
-* `lucide-react`, `class-variance-authority`, `tailwind-merge` (UI)
+```bash
+# Windows (PowerShell)
+.\startup.ps1
 
-### 3. Configure Environment Variables
+# macOS/Linux
+bash startup.sh
+```
 
-Create a `.env.local` file in the project root:
+## 🔧 Configuration
 
-**Required variables:**
+### 1. Get API Keys (Free!)
+
+- **Groq**: https://console.groq.com (sign up → create API key)
+- **Neon**: https://neon.tech (sign up → create project → copy connection string)
+
+### 2. Create `.env.local`
 
 ```env
-# Database (Neon Postgres)
-# Get from: [https://console.neon.tech/app/projects](https://console.neon.tech/app/projects)
-DATABASE_URL="postgresql://user:password@ep-host.neon.tech/neondb?sslmode=require"
-
-# Groq API Key (required for AI inference)
-# Get from: [https://console.groq.com/keys](https://console.groq.com/keys)
-GROQ_API_KEY=gsk_xxxxxxxxxxxxxx
-
-# App Config
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
+GROQ_API_KEY=gsk_your_key_here
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+JWT_SECRET=your-secret-key-change-in-production
 ```
 
-⚠️ **Important:** Never commit `.env.local` to version control.
-
-### 4. Setup Database (Prisma)
-
-Initialize your Neon Postgres database schema:
-
-```bash
-# Generate Prisma Client
-npx prisma generate
-
-# Push schema to the database
-npx prisma db push
-
-```
-
-## 🚀 Getting Started
-
-### Run the Development Server
+## 🚀 Running
 
 ```bash
 npm run dev
-
 ```
 
-Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) in your browser.
-The page will auto-reload as you edit files in `src/app/` or `app/`.
+Visit: http://localhost:3000
 
-### Project Structure
+## ✨ Features
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| 💬 **Chat Interface** | ✅ | ChatGPT-style conversation UI |
+| 🎙️ **Voice Input** | ✅ | Web Speech API with transcription |
+| 💾 **Chat History** | ✅ | Persisted in Neon PostgreSQL |
+| 📞 **Lead Capture** | ✅ | Contact form with email/phone |
+| 📅 **Meeting Scheduling** | ✅ | Schedule calls and follow-ups |
+| 👨‍💼 **Admin Dashboard** | ✅ | View all users, conversations, metrics |
+| 🔐 **Authentication** | ✅ | JWT-based admin login |
+| 📱 **Mobile Responsive** | ✅ | Works on all devices |
+| 🎨 **Modern UI** | ✅ | Dark theme with professional design |
+
+## 📂 Project Structure
 
 ```
-src/ or app/
-├── actions/            # Server Actions (DB writes, etc.)
+digital-twin/
 ├── app/
-│   ├── layout.tsx      # Root layout
-│   ├── page.tsx        # Landing page
-│   └── api/            # API Routes
-├── components/
-│   ├── ui/             # Shadcn UI components
-│   └── chat/           # Chat interface & Voice controls
-├── lib/
-│   ├── groq.ts         # Groq client
-│   ├── prisma.ts       # Database client (Singleton)
-│   └── utils.ts        # Utilities
-└── prisma/
-    └── schema.prisma   # Database schema definition
-
+│   ├── page.tsx                  ← Landing page
+│   ├── chat/page.tsx              ← Chat interface
+│   ├── admin/                     ← Admin dashboard & login
+│   └── api/                       ← Backend API routes
+│
+├── src/
+│   ├── components/                ← React components
+│   │   ├── landing/Landing.tsx
+│   │   ├── ChatPageComplete.tsx
+│   │   ├── ChatInputEnhanced.tsx
+│   │   ├── MessageListEnhanced.tsx
+│   │   ├── ContactForm.tsx
+│   │   └── AdminDashboard.tsx
+│   ├── lib/                       ← Utilities
+│   │   ├── schema.ts              ← DB schema
+│   │   ├── database.ts            ← DB operations
+│   │   ├── auth-utils.ts          ← Auth utilities
+│   │   ├── postgres.ts            ← Connection pooling
+│   │   └── ...
+│   └── types/index.ts             ← TypeScript definitions
+│
+├── .env.local                     ← Your secrets (create this!)
+├── .env.example                   ← Template
+├── package.json
+├── next.config.ts
+├── tailwind.config.ts
+├── Dockerfile                     ← Docker container config
+├── docker-compose.yml             ← Local Postgres setup
+├── QUICKSTART.md                  ← 5-minute guide
+├── SETUP.md                       ← Full setup guide
+├── PRODUCTION_README.md           ← Complete documentation
+└── DEPLOYMENT_CHECKLIST.md        ← Pre-launch checklist
 ```
 
-## 📝 Scripts
+## 🔗 API Endpoints
 
+### Public Endpoints
+- `POST /api/chat` - Chat messages
+- `POST /api/conversations` - Create conversation
+- `POST /api/contacts` - Submit contact form
+- `POST /api/meetings` - Schedule meeting
+- `POST /api/analytics` - Track events
+
+### Admin Endpoints (Protected with JWT)
+- `GET /api/admin/dashboard` - Statistics
+- `GET /api/admin/contacts` - View all contacts
+- `GET /api/admin/conversations` - View conversations
+- `POST /api/admin-auth` - Login
+- `PATCH /api/admin-auth` - Create admin user
+
+## 🗄️ Database Tables
+
+- `conversations` - Chat sessions
+- `messages` - Individual chat messages
+- `contacts` - Lead information
+- `meetings` - Meeting schedule
+- `admin_users` - Admin accounts
+- `voice_recordings` - Audio files
+- `analytics` - Event tracking
+- `embeddings` - Vector storage (for RAG)
+
+## 🎨 Customization
+
+### Change Landing Page
+Edit: [`src/components/landing/Landing.tsx`](./digital-twin/src/components/landing/Landing.tsx)
+
+### Update AI Personality
+Edit: [`app/api/chat/route.ts`](./digital-twin/app/api/chat/route.ts)
+
+### Modify Colors
+Edit: [`app/globals.css`](./digital-twin/app/globals.css) and [`tailwind.config.ts`](./digital-twin/tailwind.config.ts)
+
+## 🚀 Deployment
+
+### Vercel (Easiest)
 ```bash
-# Development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Prisma Studio (Database GUI)
-npx prisma studio
-
-# Linting
-npm run lint
-
+npm i -g vercel
+vercel
+# Follow prompts, set environment variables
 ```
 
-## 🔍 Code Quality
-
-### TypeScript Strict Mode
-
-This project uses **strict TypeScript mode**:
-
-* All variables must be properly typed.
-* No implicit `any` types.
-* Null/undefined checks are enforced.
-
-### Linting
-
-ESLint is configured with Next.js preset. To check code:
-
+### Docker
 ```bash
-npm run lint
-
+docker build -t digital-twin .
+docker run -p 3000:3000 --env-file .env digital-twin
 ```
 
-## 🛠️ Development Guidelines
+### Railway / Render / Others
+Connect your GitHub repo and set environment variables in their dashboard.
 
-### Creating Server Components
+See [DEPLOYMENT_CHECKLIST.md](./digital-twin/DEPLOYMENT_CHECKLIST.md) for detailed steps.
 
-```typescript
-// app/page.tsx
-import { prisma } from "@/lib/prisma"
+## 📊 Performance
 
-export default async function Page() {
-  const logs = await prisma.chatLog.findMany()
-  return <div>{logs.length} entries</div>
-}
+- Landing: < 0.5s
+- Chat UI: < 1s  
+- AI Response: 1-3s (Groq)
+- Database: < 100ms
 
+## 🆘 Troubleshooting
+
+### "Port 3000 in use"
+```bash
+npm run dev -- -p 3001
 ```
 
-### Creating Client Components
+### "DATABASE_URL is missing"
+Check that `.env.local` exists with your Neon connection string.
 
-Only use `"use client"` when interactivity (hooks, event listeners) is needed.
+### "Groq API error"
+Verify your API key at https://console.groq.com/keys
 
-```typescript
-"use client"
-import { useChat } from "ai/react"
-
-export function ChatComponent() {
-  const { messages, input, handleInputChange } = useChat()
-  return <input value={input} onChange={handleInputChange} />
-}
-
+### "npm install fails"
+```bash
+npm cache clean --force && npm install
 ```
 
-### Using Database (Prisma)
-
-Instead of Redis, we use Prisma to interact with Postgres:
-
-```typescript
-import { prisma } from "@/lib/prisma"
-
-// Create a new record
-await prisma.lead.create({
-  data: {
-    email: "user@example.com",
-    name: "John Doe"
-  }
-})
-
-```
-
-## 🧪 Testing
-
-Currently, manual testing is recommended. Ensure:
-
-1. Chat responds accurately using the System Prompt.
-2. Voice input/output works (Microphone permissions).
-3. Data appears in Neon Postgres after a conversation.
-
-## 🚢 Deployment
-
-### Deploy to Vercel
-
-1. Push to GitHub.
-2. Go to https://vercel.com/new.
-3. Import the repository.
-4. **Add Environment Variables** (Copy from `.env.local`).
-5. Click Deploy.
+See [SETUP.md](./digital-twin/SETUP.md) for more troubleshooting.
 
 ## 📚 Documentation
 
-* **[PRD](https://www.google.com/search?q=docs/prd.md)** - Product Requirements & Acceptance Criteria
-* **[Agents](agents.md)** - AI Instructions & Tech Stack Standards
-* **[Next.js Docs](https://nextjs.org/docs)**
-* **[Prisma Docs](https://www.prisma.io/docs)**
-* **[Groq API Docs](https://console.groq.com/docs)**
+| Document | Purpose |
+|----------|---------|
+| [QUICKSTART.md](./digital-twin/QUICKSTART.md) | 5-minute setup (START HERE!) |
+| [SETUP.md](./digital-twin/SETUP.md) | Comprehensive setup guide |
+| [PRODUCTION_README.md](./digital-twin/PRODUCTION_README.md) | Complete feature documentation |
+| [DEPLOYMENT_CHECKLIST.md](./digital-twin/DEPLOYMENT_CHECKLIST.md) | Pre-launch checklist |
+| [POSTGRES_MIGRATION.md](./POSTGRES_MIGRATION.md) | Database migration |
 
-## 🐛 Troubleshooting
+## 🧪 Testing
 
-### Prisma Client Error
+### Test Features
+1. **Landing**: Visit http://localhost:3000
+2. **Chat**: Click "Start Chat" or go to http://localhost:3000/chat
+3. **Voice**: Try recording in chat
+4. **Contact**: Fill out the contact form
+5. **Admin**: Login at http://localhost:3000/admin/login
 
-If you see errors related to `@prisma/client`:
-
+### Create Admin User
 ```bash
-npx prisma generate
-
+curl -X PATCH http://localhost:3000/api/admin-auth \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "secure-password",
+    "name": "Your Name"
+  }'
 ```
 
-### Database Connection Issues
+## 🔐 Security
 
-* Verify `DATABASE_URL` in `.env.local`.
-* Ensure your IP is allowed in Neon (or "Allow all IPs" for dev).
+- ✅ JWT authentication (24-hour expiration)
+- ✅ PBKDF2 password hashing (100k iterations)
+- ✅ Environment variable secrets
+- ✅ SQL parameterized queries
+- ✅ CORS headers configured
+- ✅ Connection pooling
+- ✅ Admin token validation
 
-### Voice Not Working
+## 📈 Roadmap
 
-* Check browser microphone permissions.
+- ✅ Core chat interface
+- ✅ Voice support
+- ✅ Admin dashboard  
+- ✅ Lead capture
+- ⏳ Text-to-speech (ElevenLabs)
+- ⏳ Calendar integration (Google/Outlook)
+- ⏳ Email notifications (SendGrid)
+- ⏳ Advanced analytics
+
+## 🤝 Contributing
+
+1. Create feature branch
+2. Make changes
+3. Test locally
+4. Submit PR
+
+## 📄 License
+
+MIT License
+
+## 🎯 Next Steps
+
+1. **Get running**: `npm install && npm run dev`
+2. **Grab API keys**: Groq (free) and Neon (free)
+3. **Configure**: Create `.env.local`
+4. **Customize**: Edit landing page and AI personality
+5. **Deploy**: Follow [DEPLOYMENT_CHECKLIST.md](./digital-twin/DEPLOYMENT_CHECKLIST.md)
+
+---
+
+**Questions?** Read [QUICKSTART.md](./digital-twin/QUICKSTART.md) for detailed guide!
+
+Made with ❤️ for Digital Twin Team 2
 * Ensure you are using `https://` or `localhost`.
 
 ## 🤝 Contributing

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateEmbeddings } from "@/lib/embeddings";
-import { upsertVectors, storeIngestionMetadata, initializeDatabase } from "@/lib/postgres";
+import { upsertVectors, storeIngestionMetadata, ensureInitialized } from "@/lib/postgres";
 
 export const runtime = "nodejs";
-
-// Track if database has been initialized
-let dbInitialized = false;
 
 // Max chunk size for content (characters) - keep metadata under 48KB limit
 const MAX_CHUNK_SIZE = 2000;
@@ -48,10 +45,7 @@ function chunkText(text: string, chunkSize: number = MAX_CHUNK_SIZE): string[] {
 export async function POST(req: NextRequest) {
   try {
     // Initialize database tables on first request
-    if (!dbInitialized) {
-      await initializeDatabase();
-      dbInitialized = true;
-    }
+    await ensureInitialized();
 
     const payload = await req.json();
 

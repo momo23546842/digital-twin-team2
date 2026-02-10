@@ -2,8 +2,9 @@ import { Pool, PoolClient } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
+let initialized = false;
 
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not defined");
@@ -14,6 +15,18 @@ function getPool(): Pool {
     });
   }
   return pool;
+}
+
+export async function ensureInitialized() {
+  if (initialized) return;
+  try {
+    await initializeDatabase();
+    initialized = true;
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    // Don't set initialized to true so it retries next time
+    throw error;
+  }
 }
 
 /**
@@ -115,6 +128,8 @@ export async function upsertVectors(
 ) {
   if (vectors.length === 0) return;
 
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     // Build the VALUES clause for bulk insert
@@ -162,6 +177,8 @@ export async function querySimilarVectors(
   queryVector: number[],
   topK: number = 5
 ) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const queryEmbed = JSON.stringify(queryVector);

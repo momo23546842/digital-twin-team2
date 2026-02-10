@@ -13,18 +13,28 @@ export const runtime = "nodejs";
  */
 async function getRAGContext(userMessage: string): Promise<string> {
   try {
+    console.log("[RAG] Starting context retrieval");
+    
     // Generate embedding for user message
     const messageEmbedding = await generateEmbeddings(userMessage);
+    console.log("[RAG] Embedding generated");
 
     // Query similar vectors
-    const results = await querySimilarVectors(messageEmbedding, 3);
-
-    if (!results || results.length === 0) {
-      console.log("RAG: No results found");
+    let results: any[] = [];
+    try {
+      results = await querySimilarVectors(messageEmbedding, 3);
+      console.log("[RAG] Query completed, results:", results.length);
+    } catch (queryError) {
+      console.warn("[RAG] Query failed, continuing without context:", queryError);
       return "";
     }
 
-    console.log("RAG: Found", results.length, "results");
+    if (!results || results.length === 0) {
+      console.log("[RAG] No results found");
+      return "";
+    }
+
+    console.log("[RAG] Found", results.length, "results");
 
     // Extract and format context from results
     const contextParts = results
@@ -32,17 +42,15 @@ async function getRAGContext(userMessage: string): Promise<string> {
         const metadata = result.metadata || {};
         const content = metadata.content || metadata.title || "";
         
-        console.log(`RAG result ${index}:`, {
+        console.log(`[RAG] Result ${index}:`, {
           hasMetadata: !!result.metadata,
           contentType: typeof content,
           contentLength: typeof content === "string" ? content.length : 0,
-          contentPreview: typeof content === "string" ? content.slice(0, 100) : "N/A",
-          score: result.score,
         });
         
         // Ensure content is a valid string
         if (typeof content !== "string" || content.length === 0) {
-          console.warn("Skipping empty or non-string metadata content");
+          console.warn("[RAG] Skipping empty or non-string metadata content");
           return "";
         }
         
@@ -51,14 +59,14 @@ async function getRAGContext(userMessage: string): Promise<string> {
       .filter((text: string) => text.length > 0);
 
     if (contextParts.length === 0) {
-      console.log("RAG: No valid context parts after filtering");
+      console.log("[RAG] No valid context parts after filtering");
       return "";
     }
 
-    console.log("RAG: Using", contextParts.length, "context parts");
+    console.log("[RAG] Using", contextParts.length, "context parts");
     return `\n\nRelevant context from knowledge base:\n${contextParts.join("\n---\n")}`;
   } catch (error) {
-    console.error("RAG context retrieval error:", error);
+    console.error("[RAG] Context retrieval error:", error);
     return "";
   }
 }
@@ -66,14 +74,27 @@ async function getRAGContext(userMessage: string): Promise<string> {
 /**
  * Detect if the user message should trigger an MCP tool call.
  * Returns MCP tool results as additional context, or empty string.
+ * Now with graceful fallback if MCP tools are unavailable.
  */
 async function getMcpContext(userMessage: string): Promise<string> {
   const lower = userMessage.toLowerCase();
 
   try {
-    // Check if MCP tools are available
-    const tools = await listMcpTools();
+    console.log("[MCP] Checking for MCP triggers");
+    
+    // Check if MCP tools are available - wrap in try/catch
+    let tools: any[] = [];
+    try {
+      console.log("[MCP] Listing available tools");
+      tools = await listMcpTools();
+      console.log("[MCP] Found", tools.length, "tools");
+    } catch (toolsError) {
+      console.warn("[MCP] Tools not available, continuing without them:", toolsError);
+      return "";
+    }
+
     if (!tools || tools.length === 0) {
+      console.log("[MCP] No tools available");
       return "";
     }
 
@@ -86,14 +107,18 @@ async function getMcpContext(userMessage: string): Promise<string> {
     ];
 
     if (candidatePatterns.some((p) => p.test(lower))) {
-      console.log("MCP: Triggering get_candidate_info tool");
-      const result = await callMcpTool("get_candidate_info", {
-        candidateId: "default",
-      });
-      if (!result.isError && result.content.length > 0) {
-        mcpResults.push(
-          `[Candidate Profile Data]\n${result.content.map((c) => c.text).join("\n")}`
-        );
+      try {
+        console.log("[MCP] Triggering get_candidate_info tool");
+        const result = await callMcpTool("get_candidate_info", {
+          candidateId: "default",
+        });
+        if (!result.isError && result.content.length > 0) {
+          mcpResults.push(
+            `[Candidate Profile Data]\n${result.content.map((c) => c.text).join("\n")}`
+          );
+        }
+      } catch (toolError) {
+        console.warn("[MCP] get_candidate_info tool failed:", toolError);
       }
     }
 
@@ -104,43 +129,59 @@ async function getMcpContext(userMessage: string): Promise<string> {
     ];
 
     if (jobMatchPatterns.some((p) => p.test(lower))) {
-      console.log("MCP: Triggering analyze_job_match tool");
-      const result = await callMcpTool("analyze_job_match", {
-        candidateId: "default",
-        jobDescription: userMessage,
-      });
-      if (!result.isError && result.content.length > 0) {
-        mcpResults.push(
-          `[Job Match Analysis]\n${result.content.map((c) => c.text).join("\n")}`
-        );
+      try {
+        console.log("[MCP] Triggering analyze_job_match tool");
+        const result = await callMcpTool("analyze_job_match", {
+          candidateId: "default",
+          jobDescription: userMessage,
+        });
+        if (!result.isError && result.content.length > 0) {
+          mcpResults.push(
+            `[Job Match Analysis]\n${result.content.map((c) => c.text).join("\n")}`
+          );
+        }
+      } catch (toolError) {
+        console.warn("[MCP] analyze_job_match tool failed:", toolError);
       }
     }
 
-    if (mcpResults.length === 0) return "";
+    if (mcpResults.length === 0) {
+      console.log("[MCP] No trigger patterns matched");
+      return "";
+    }
 
-    console.log("MCP: Returning", mcpResults.length, "tool results");
+    console.log("[MCP] Returning", mcpResults.length, "tool results");
     return `\n\nAdditional context from tools:\n${mcpResults.join("\n---\n")}`;
   } catch (error) {
-    console.error("MCP context retrieval error:", error);
+    console.error("[MCP] Context retrieval error:", error);
     return "";
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[CHAT API] Request received");
+    
     // Extract user ID for rate limiting
     const userId = req.headers.get("x-user-id") || "anonymous";
 
-    // Rate limit check
-    const isAllowed = await checkRateLimit(userId, 10, 60);
-    if (!isAllowed) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429 }
-      );
+    // Rate limit check - wrap in try/catch
+    try {
+      console.log("[CHAT API] Checking rate limit for user:", userId);
+      const isAllowed = await checkRateLimit(userId, 10, 60);
+      if (!isAllowed) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded" },
+          { status: 429 }
+        );
+      }
+      console.log("[CHAT API] Rate limit check passed");
+    } catch (rateLimitError) {
+      console.warn("[CHAT API] Rate limit check failed, allowing request:", rateLimitError);
     }
 
     // Parse request
+    console.log("[CHAT API] Parsing request");
     const payload: ChatRequestPayload = await req.json();
 
     if (!payload.messages || payload.messages.length === 0) {
@@ -154,6 +195,7 @@ export async function POST(req: NextRequest) {
     const lastMessage = payload.messages[payload.messages.length - 1];
 
     // Fetch RAG context and MCP tool context in parallel
+    console.log("[CHAT API] Fetching RAG and MCP context");
     const [ragContext, mcpContext] = await Promise.all([
       lastMessage.role === "user"
         ? getRAGContext(lastMessage.content)
@@ -162,6 +204,7 @@ export async function POST(req: NextRequest) {
         ? getMcpContext(lastMessage.content)
         : Promise.resolve(""),
     ]);
+    console.log("[CHAT API] Context fetched. RAG:", !!ragContext, "MCP:", !!mcpContext);
 
     const combinedContext = ragContext + mcpContext;
 
@@ -195,7 +238,9 @@ ${combinedContext}`
     });
 
     // Call Groq API
+    console.log("[CHAT API] Calling Groq API");
     const response = await callGroqChat(groqMessages);
+    console.log("[CHAT API] Groq response received");
 
     // Build response
     const responsePayload: ChatResponsePayload = {
@@ -214,11 +259,16 @@ ${combinedContext}`
       sessionId: payload.sessionId || `session-${Date.now()}`,
     };
 
+    console.log("[CHAT API] Sending response");
     return NextResponse.json(responsePayload);
   } catch (error) {
-    console.error("Chat API error:", error);
+    console.error("[CHAT API] Critical error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : "";
+    console.error("[CHAT API] Error stack:", errorStack);
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: errorMessage, details: process.env.NODE_ENV === "development" ? errorStack : undefined },
       { status: 500 }
     );
   }

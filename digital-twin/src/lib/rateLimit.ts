@@ -1,4 +1,5 @@
 import { getPool } from "./postgres";
+import { ensureInitialized } from "./postgres";
 
 /**
  * Check rate limit for a user
@@ -9,6 +10,8 @@ export async function checkRateLimit(
   limit: number = 10,
   windowSeconds: number = 60
 ): Promise<boolean> {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const key = `rate-limit:${userId}`;
