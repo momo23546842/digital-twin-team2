@@ -107,6 +107,20 @@ export async function initializeDatabase() {
       ON rate_limits(expires_at);
     `);
 
+    // Ensure auth tables are present
+    try {
+      await initializeAuthTables();
+    } catch (err) {
+      console.warn('Could not initialize auth tables:', err);
+    }
+
+    // Ensure chat/application tables are present
+    try {
+      await initializeAppTables(client);
+    } catch (err) {
+      console.warn('Could not initialize app tables:', err);
+    }
+
     console.log("Database initialized successfully");
   } catch (error) {
     console.error("Database initialization error:", error);
@@ -114,6 +128,139 @@ export async function initializeDatabase() {
   } finally {
     client.release();
   }
+}
+
+// Create users and sessions tables if they don't exist
+export async function initializeAuthTables() {
+  const client = await getPool().connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (error) {
+    console.error('Auth table initialization error:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Create application tables (conversations, messages, contacts, meetings, analytics)
+async function initializeAppTables(client: PoolClient) {
+  // Conversations table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      user_id TEXT,
+      title TEXT,
+      status TEXT DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS conversations_session_idx ON conversations(session_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS conversations_user_idx ON conversations(user_id);
+  `);
+
+  // Messages table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      voice_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS messages_conversation_idx ON messages(conversation_id);
+  `);
+
+  // Contacts table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS contacts (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      name TEXT,
+      phone TEXT,
+      company TEXT,
+      title TEXT,
+      message TEXT,
+      source TEXT DEFAULT 'chat',
+      status TEXT DEFAULT 'new',
+      conversation_id TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS contacts_email_idx ON contacts(email);
+  `);
+
+  // Meetings table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS meetings (
+      id TEXT PRIMARY KEY,
+      contact_id TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+      scheduled_at TIMESTAMP NOT NULL,
+      duration_minutes INTEGER DEFAULT 30,
+      status TEXT DEFAULT 'scheduled',
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS meetings_contact_idx ON meetings(contact_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS meetings_scheduled_idx ON meetings(scheduled_at);
+  `);
+
+  // Analytics table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS analytics (
+      id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      conversation_id TEXT,
+      user_id TEXT,
+      event_data JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS analytics_event_type_idx ON analytics(event_type);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS analytics_created_idx ON analytics(created_at);
+  `);
 }
 
 /**

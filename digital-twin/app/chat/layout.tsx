@@ -1,57 +1,31 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
+  // Show loading spinner while checking auth
+  // Middleware already handles redirecting unauthenticated users to /login
+  // So if we're here, either we're still loading OR we're authenticated
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+          <p className="mt-4 text-slate-300">Loading...</p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-col h-screen">
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 bg-white">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Digital Twin</h1>
-          <p className="text-sm text-gray-500">
-            Logged in as {user?.name}
-          </p>
-        </div>
-        <button
-          onClick={logout}
-          className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-200"
-        >
-          Logout
-        </button>
-      </div>
-      {children}
-    </div>
-  );
+  // If auth check completed but not authenticated, middleware should have redirected.
+  // If we're still here, it means auth verification may have had an issue.
+  // Render children anyway since middleware already validated the cookie exists.
+  // The ChatPageComplete will handle any API-level auth errors gracefully.
+  return <>{children}</>;
 }

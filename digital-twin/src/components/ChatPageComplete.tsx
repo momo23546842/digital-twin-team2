@@ -5,6 +5,7 @@ import { Sidebar, Settings, LogOut, History } from 'lucide-react';
 import MessageList from '@/components/MessageListEnhanced';
 import ChatInputEnhanced from '@/components/ChatInputEnhanced';
 import ContactForm from '@/components/ContactForm';
+import { useAuth } from '@/lib/auth-context';
 import type { Message, Conversation } from '@/types';
 
 interface ChatPageProps {
@@ -12,6 +13,7 @@ interface ChatPageProps {
 }
 
 export default function ChatPage({ initialSessionId }: ChatPageProps) {
+  const { logout, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -25,7 +27,7 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
   const [sessionId, setSessionId] = useState<string>(initialSessionId || '');
   const [conversationId, setConversationId] = useState<string>('');
   const [showContactForm, setShowContactForm] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatHistory, setChatHistory] = useState<Conversation[]>([]);
 
   // Initialize session
@@ -156,8 +158,8 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     <div className="h-screen bg-slate-900 flex">
       {/* Sidebar */}
       <div
-        className={`bg-slate-800 border-r border-slate-700 w-64 flex flex-col transition-all duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-64 fixed h-full z-50'
+        className={`bg-slate-800 border-r border-slate-700 w-64 flex-shrink-0 flex flex-col transition-all duration-300 ${
+          sidebarOpen ? 'relative' : 'fixed -translate-x-full h-full z-50 md:relative md:translate-x-0'
         }`}
       >
         <div className="p-4 border-b border-slate-700">
@@ -202,7 +204,10 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
             <Settings size={18} />
             Settings
           </button>
-          <button className="w-full flex items-center gap-2 px-4 py-2 text-slate-300 hover:bg-slate-700 rounded transition-colors text-sm text-left">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2 px-4 py-2 text-slate-300 hover:bg-slate-700 rounded transition-colors text-sm text-left"
+          >
             <LogOut size={18} />
             Sign Out
           </button>

@@ -23,15 +23,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   // Verify session on mount using the verify endpoint
   useEffect(() => {
-    setIsHydrated(true);
-    setIsLoading(true);
-
     const verifySession = async () => {
       try {
         const response = await fetch('/api/auth/verify', {
@@ -48,34 +44,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
             setToken('authenticated'); // Token exists server-side via cookie
+          } else {
+            // Cookie is valid but no user in localStorage
+            // Set a placeholder user from the verify response
+            setUser({ id: data.userId, email: '', name: 'User' });
+            setToken('authenticated');
           }
         } else {
-          // Session invalid or expired
+          // Session invalid or expired - clear localStorage
+          // But do NOT redirect here - middleware handles route protection
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
           setUser(null);
           setToken(null);
-          
-          // Redirect to login if on a protected route
-          const pathname = window.location.pathname;
-          if (['/chat', '/dashboard', '/admin'].some(route => pathname.startsWith(route))) {
-            router.push('/login');
-          }
         }
       } catch (error) {
         console.error('Error verifying session:', error);
-        // On error, clear auth state
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        setUser(null);
-        setToken(null);
+        // On network/API error, check if we have cached user data
+        // This prevents auth failures due to temporary API issues
+        const storedUser = localStorage.getItem('auth_user');
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            setToken('authenticated');
+          } catch {
+            setUser(null);
+            setToken(null);
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     verifySession();
-  }, [router]);
+  }, []);
 
   const setAuthData = (newUser: User, newToken: string) => {
     setUser(newUser);
@@ -107,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
-        isLoading: isLoading && isHydrated,
+        isLoading,
         isAuthenticated: !!token && !!user,
         logout,
         setAuthData,

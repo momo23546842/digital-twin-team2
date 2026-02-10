@@ -30,17 +30,21 @@ export async function POST(request: NextRequest) {
     // Initialize database
     await initializeDatabase();
 
-    // Seed demo user
+    // Seed demo user (or update password if exists)
     try {
       const demoUser = await createUser(
         'test@example.com',
         'Test User',
-        'Password123'
+        'password123'
       );
       console.log('Demo user created:', demoUser.id);
     } catch (error) {
       if (error instanceof Error && error.message === 'Email already exists') {
-        console.log('Demo user already exists');
+        // User exists - update password to ensure it matches demo credentials
+        console.log('Demo user already exists, updating password...');
+        const { updateUserPassword } = await import('@/lib/auth-database');
+        await updateUserPassword('test@example.com', 'password123');
+        console.log('Demo user password updated');
       } else {
         throw error;
       }
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
         message: 'Database initialized successfully',
         demoCredentials: {
           email: 'test@example.com',
-          password: 'Password123'
+          password: 'password123'
         }
       },
       { status: 200 }

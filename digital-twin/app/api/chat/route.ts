@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGroqChat } from "@/lib/groq";
-import { checkRateLimit } from "@/lib/redis";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { generateEmbeddings } from "@/lib/embeddings";
-import { querySimilarVectors } from "@/lib/vector";
+import { querySimilarVectors } from "@/lib/postgres";
 import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 
 export const runtime = "nodejs";

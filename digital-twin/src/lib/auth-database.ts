@@ -224,3 +224,22 @@ export async function cleanupExpiredSessions(): Promise<void> {
     client.release();
   }
 }
+
+/**
+ * Update user password by email
+ */
+export async function updateUserPassword(email: string, newPassword: string): Promise<void> {
+  const client = await getPool().connect();
+  try {
+    const passwordHash = hashPassword(newPassword);
+    await client.query(
+      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
+      [passwordHash, email.toLowerCase()]
+    );
+  } catch (error) {
+    console.error('Update user password error:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
