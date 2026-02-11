@@ -1,0 +1,63 @@
+[    8407ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[    9914ms] ModuleParseError: Module parse failed: Duplicate export 'getPool' (275:13)
+File was processed with these loaders:
+ * ./node_modules/next/dist/build/webpack/loaders/next-flight-loader/index.js
+ * ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+You may need an additional loader to handle the result of these loaders.
+| /**
+|  * Export getPool for use in other modules
+>  */ export { getPool };
+| /**
+|  * Close database connection
+    at <unknown> (File was processed with these loaders:)
+    at handleParseError (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\webpack\bundle5.js:29:410378)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\webpack\bundle5.js:29:411994)
+    at processResult (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\webpack\bundle5.js:29:407859)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\webpack\bundle5.js:29:408881)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:8727)
+    at iterateNormalLoaders (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5565)
+    at iterateNormalLoaders (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5650)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5879)
+    at r.callback (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4039)
+    at Object.transformSource (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\build\webpack\loaders\next-flight-loader\index.js:191:10)
+    at LOADER_EXECUTION (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4134)
+    at runSyncOrAsync (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4145)
+    at iterateNormalLoaders (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5782)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5142)
+    at r.callback (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4039)
+    at <unknown> (file://C:\Users\bises\OneDrive\Desktop\digital-twin-team2\digital-twin\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js:224:23)
+[    9938ms] [ERROR] ./src/lib/postgres.ts
+Module parse failed: Duplicate export 'getPool' (275:13)
+| /**
+|  * Export getPool for use in other modules
+>  */ export { getPool };
+| /**
+|  * Close database connection @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[   10016ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  189760ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/webpack/f55c0965c8e0e505.webpack.hot-update.json:0
+[  189810ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[  277865ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/webpack/f55c0965c8e0e505.webpack.hot-update.json:0
+[  277870ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[  298185ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/auth/verify:0
+[  312571ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/chat?_rsc=vusbg:0
+[  313765ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  317254ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=14jy4:0
+[  317917ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  321932ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  322017ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  324533ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770719683784:0
+[  324560ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770719683784:0
+[  324561ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[  324561ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[  324666ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  326194ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  326292ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  328346ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  328475ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  329962ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770719689458:0
+[  330116ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770719689458:0
+[  330117ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[  330117ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[  330316ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0
+[  332538ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  332713ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/favicon.ico:0

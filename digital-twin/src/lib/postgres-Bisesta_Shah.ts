@@ -327,6 +327,11 @@ export async function storeIngestionMetadata(
 }
 
 /**
+ * Export getPool for use in other modules
+ */
+export { getPool };
+
+/**
  * Close database connection
  */
 export async function closeDatabase() {

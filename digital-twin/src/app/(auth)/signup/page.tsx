@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { setAuthData } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,11 +33,7 @@ export default function SignupPage() {
         return;
       }
 
-      // Store auth data
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('auth_user', JSON.stringify(data.user));
-
-      // Redirect to chat
+      setAuthData(data.user, data.token);
       router.push('/chat');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -45,121 +43,164 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        {/* Card Container */}
-        <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-12 border border-gray-100">
-          {/* Header Section */}
-          <div className="text-center mb-12">
-            {/* Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl shadow-lg mb-8 ring-2 ring-purple-100">
-              <span className="text-white font-black text-3xl">✦</span>
+    <div className="min-h-screen flex bg-white">
+      {/* Left Panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-500 to-emerald-700 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -left-20 w-96 h-96 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/5 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full" />
+        </div>
+
+        {/* Logo */}
+        <div className="relative flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <span className="text-xl">🤖</span>
+          </div>
+          <span className="text-white font-bold text-xl">Digital Twin</span>
+        </div>
+
+        {/* Center content */}
+        <div className="relative space-y-6">
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+            <span className="text-white/90 text-sm font-medium">Join thousands of users</span>
+          </div>
+          <h1 className="text-5xl font-black text-white leading-tight">
+            Build Your<br />Digital Identity
+          </h1>
+          <p className="text-white/75 text-lg leading-relaxed max-w-sm">
+            Create an AI version of yourself that can answer questions, showcase your work, and represent you 24/7.
+          </p>
+
+          {/* Feature list */}
+          <div className="space-y-3 mt-8">
+            {[
+              'AI that knows your full story',
+              'Always available, never tired',
+              'Professional & personalized responses',
+            ].map((feature) => (
+              <div key={feature} className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                <span className="text-white/85 text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="relative text-white/50 text-xs">
+          © 2025 Digital Twin. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-16">
+        <div className="w-full max-w-md">
+
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-10 lg:hidden">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <span className="text-base">🤖</span>
             </div>
-            
-            {/* Title */}
-            <h2 className="text-5xl sm:text-6xl font-black text-gray-900 mb-4 leading-tight">
-              Get Started
-            </h2>
-            
-            {/* Subtitle */}
-            <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
-              Create your Digital Twin account today
-            </p>
+            <span className="font-bold text-gray-900">Digital Twin</span>
           </div>
 
-          {/* Form */}
-          <form className="space-y-7" onSubmit={handleSubmit}>
-            {/* Error Message */}
+          <div className="mb-10">
+            <h2 className="text-3xl font-black text-gray-900 mb-2">Create your account</h2>
+            <p className="text-gray-500">Get started with your Digital Twin for free</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-2xl bg-red-50 border-2 border-red-200 p-5">
-                <p className="text-red-800 font-bold text-sm">{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-red-700 text-sm font-medium">{error}</p>
               </div>
             )}
 
-            {/* Form Fields */}
-            <div className="space-y-6">
-              {/* Full Name Field */}
-              <div>
-                <label htmlFor="name" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
-                  Full name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email-address" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
-                  Email address
-                </label>
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label htmlFor="password" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
+                Full name
+              </label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all duration-200 placeholder-gray-400"
+              />
             </div>
 
-            {/* Submit Button */}
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all duration-200 placeholder-gray-400"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all duration-200 placeholder-gray-400"
+              />
+              <p className="text-xs text-gray-400 mt-1">Minimum 8 characters</p>
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-5 px-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-black rounded-2xl hover:from-purple-700 hover:to-purple-800 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base tracking-tight shadow-lg hover:shadow-2xl mt-8"
+              className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating account...
+                </span>
+              ) : (
+                'Create free account'
+              )}
             </button>
 
-            {/* Sign In Link */}
-            <div className="text-center pt-6 border-t border-gray-100">
-              <p className="text-gray-700 text-sm font-medium">
-                Already have an account?{' '}
-                <Link href="/login" className="font-black text-purple-600 hover:text-purple-700 hover:underline transition-all duration-200">
-                  Sign in
-                </Link>
-              </p>
-            </div>
+            <p className="text-center text-sm text-gray-500 pt-2">
+              Already have an account?{' '}
+              <Link href="/login" className="text-green-600 font-semibold hover:text-green-700">
+                Sign in
+              </Link>
+            </p>
           </form>
-        </div>
 
-        {/* Footer Text */}
-        <p className="text-xs text-gray-500 text-center leading-relaxed mt-8 font-medium px-4">
-          By creating an account, you agree to our{' '}
-          <span className="text-gray-600 font-semibold">Terms of Service</span> and{' '}
-          <span className="text-gray-600 font-semibold">Privacy Policy</span>
-        </p>
+          <p className="text-xs text-gray-400 text-center mt-8 leading-relaxed">
+            By creating an account you agree to our{' '}
+            <span className="text-gray-500 font-medium cursor-pointer hover:text-gray-700">Terms of Service</span>{' '}
+            and{' '}
+            <span className="text-gray-500 font-medium cursor-pointer hover:text-gray-700">Privacy Policy</span>
+          </p>
+
+        </div>
       </div>
     </div>
   );

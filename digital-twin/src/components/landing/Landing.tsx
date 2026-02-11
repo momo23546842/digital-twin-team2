@@ -1,47 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowRight, MessageCircle, Mic, FileText, Calendar, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
-
-  React.useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Navigation */}
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-          scrolled ? 'bg-slate-900/95 backdrop-blur border-b border-slate-700' : 'bg-transparent'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
-            Digital Twin
-          </h1>
-          <Link
-            href="/chat"
-            className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-          >
-            Start Chat
-          </Link>
-        </div>
-      </nav>
-
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-8 inline-block px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
             <p className="text-emerald-400 text-sm font-medium">🚀 Your AI Career Assistant</p>
           </div>
+
 
           <h2 className="text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
             Meet Your Digital Twin
@@ -54,10 +26,10 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Link
-              href="/chat"
+              href="/signup"
               className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
             >
-              Start Conversation <ArrowRight size={20} />
+              Get Started <ArrowRight size={20} />
             </Link>
             <a
               href="#features"
@@ -162,10 +134,10 @@ export default function LandingPage() {
             Start a conversation and let's explore what we can build together.
           </p>
           <Link
-            href="/chat"
+            href="/signup"
             className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
           >
-            Start Exploring <ArrowRight size={20} />
+            Create Free Account <ArrowRight size={20} />
           </Link>
         </div>
       </section>
@@ -181,16 +153,8 @@ export default function LandingPage() {
             <div>
               <h5 className="font-semibold text-white mb-2">Product</h5>
               <ul className="text-sm text-slate-400 space-y-1">
-                <li>
-                  <a href="#" className="hover:text-emerald-400 transition-colors">
-                    Chat
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-emerald-400 transition-colors">
-                    Features
-                  </a>
-                </li>
+                <li><a href="#features" className="hover:text-emerald-400 transition-colors">Features</a></li>
+                <li><Link href="/chat" className="hover:text-emerald-400 transition-colors">Chat</Link></li>
               </ul>
             </div>
             <div>
@@ -225,7 +189,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-slate-700 pt-8 text-center text-slate-400">
-            <p>&copy; 2024 Digital Twin. All rights reserved.</p>
+            <p>&copy; 2025 Digital Twin. All rights reserved.</p>
           </div>
         </div>
       </footer>

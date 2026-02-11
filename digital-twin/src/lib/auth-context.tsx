@@ -23,66 +23,60 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // ✅ start true to prevent flash
   const router = useRouter();
 
-  // Verify session on mount using the verify endpoint
   useEffect(() => {
-    setIsHydrated(true);
-    setIsLoading(true);
-
     const verifySession = async () => {
+      // First: try to restore from localStorage immediately (no flicker)
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
+
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setToken(storedToken);
+          // Sync cookie so middleware can see it
+          document.cookie = `auth_token=${storedToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        } catch {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+        }
+      }
+
+      // Then: verify with server in background
       try {
         const response = await fetch('/api/auth/verify', {
           method: 'GET',
-          credentials: 'include', // Include cookies in the request
+          credentials: 'include',
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Session is valid, but we need user info
-          // Get user info from localStorage as fallback, or from a user endpoint
-          const storedUser = localStorage.getItem('auth_user');
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setToken('authenticated'); // Token exists server-side via cookie
-          }
-        } else {
-          // Session invalid or expired
+        if (!response.ok) {
+          // Server says invalid — clear everything
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
+          document.cookie = 'auth_token=; path=/; max-age=0';
           setUser(null);
           setToken(null);
-          
-          // Redirect to login if on a protected route
-          const pathname = window.location.pathname;
-          if (['/chat', '/dashboard', '/admin'].some(route => pathname.startsWith(route))) {
-            router.push('/login');
-          }
         }
-      } catch (error) {
-        console.error('Error verifying session:', error);
-        // On error, clear auth state
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        setUser(null);
-        setToken(null);
+      } catch {
+        // Network error — keep local state, don't log out
       } finally {
         setIsLoading(false);
       }
     };
 
     verifySession();
-  }, [router]);
+  }, []);
 
   const setAuthData = (newUser: User, newToken: string) => {
     setUser(newUser);
     setToken(newToken);
-    // Store user data for reload persistence
+    localStorage.setItem('auth_token', newToken);
     localStorage.setItem('auth_user', JSON.stringify(newUser));
-    // Don't store token in localStorage - rely on HTTP-only cookie
+    // ✅ Sync cookie for middleware
+    document.cookie = `auth_token=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
   };
 
   const logout = async () => {
@@ -91,12 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch {
+      // Continue logout even if request fails
     }
 
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    document.cookie = 'auth_token=; path=/; max-age=0';
     setToken(null);
     setUser(null);
     router.push('/');
@@ -107,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
-        isLoading: isLoading && isHydrated,
+        isLoading,
         isAuthenticated: !!token && !!user,
         logout,
         setAuthData,
