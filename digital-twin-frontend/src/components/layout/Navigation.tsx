@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  // Ensure component hydrates on client
+  useEffect(() => {
+    setHydrated(true);
+    console.log('Navigation hydrated. User:', user);
+  }, [user]);
 
   const navItems = [
     { label: 'Home', href: '/' },
@@ -59,14 +68,43 @@ export default function Navigation() {
             ))}
           </div>
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <button className="text-gray-700 hover:text-gray-900 transition-colors font-medium">
-              Sign In
-            </button>
-            <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium">
-              Get Started
-            </button>
+            {hydrated ? (
+              user ? (
+                <>
+                  <div className="flex items-center space-x-3 px-4 py-2 bg-white/10 rounded-lg">
+                    <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-600">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="text-gray-700 hover:text-gray-900 transition-colors font-medium px-4 py-2 rounded-lg hover:bg-white/20"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">
+                    Sign In
+                  </Link>
+                  <Link href="/signup" className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium">
+                    Get Started
+                  </Link>
+                </>
+              )
+            ) : (
+              // Loading skeleton
+              <div className="h-10 w-40 bg-white/20 rounded-lg animate-pulse"></div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,6 +141,41 @@ export default function Navigation() {
                 {item.label}
               </Link>
             ))}
+            {hydrated && user && (
+              <>
+                <div className="px-4 py-3 border-t border-white/30 mt-4">
+                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-600">{user.email}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-white/50 rounded transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            )}
+            {hydrated && !user && (
+              <>
+                <Link
+                  href="/login"
+                  className="block px-4 py-2 text-gray-700 hover:bg-white/50 rounded cursor-pointer mt-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>
