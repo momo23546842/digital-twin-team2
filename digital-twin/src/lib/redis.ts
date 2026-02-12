@@ -1,86 +1,126 @@
-import { Redis } from "@upstash/redis";
+/**
+ * Redis replacement using Neon PostgreSQL (database_cache table)
+ * Drop-in replacement for @upstash/redis - no Redis needed
+ */
 
-if (
-  !process.env.UPSTASH_REDIS_REST_URL ||
-  !process.env.UPSTASH_REDIS_REST_TOKEN
-) {
-  throw new Error(
-    "Upstash Redis credentials are not defined in environment variables"
-  );
-}
-
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+import { getPool, ensureInitialized } from "./postgres";
 
 /**
- * Store a value in Redis with optional TTL (in seconds)
+ * Store a value in the database cache with optional TTL (in seconds)
  */
 export async function setRedisValue(
   key: string,
   value: string | object,
   ttl?: number
 ) {
+  await ensureInitialized();
+  const client = await getPool().connect();
   try {
     const serialized =
       typeof value === "string" ? value : JSON.stringify(value);
-    if (ttl) {
-      await redis.setex(key, ttl, serialized);
-    } else {
-      await redis.set(key, serialized);
-    }
+    const expiresAt = ttl
+      ? new Date(Date.now() + ttl * 1000)
+      : null;
+
+    await client.query(
+      `INSERT INTO database_cache (key, value, expires_at, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) DO UPDATE SET
+         value = EXCLUDED.value,
+         expires_at = EXCLUDED.expires_at,
+         updated_at = CURRENT_TIMESTAMP`,
+      [key, serialized, expiresAt]
+    );
   } catch (error) {
-    console.error("Redis set error:", error);
+    console.error("Cache set error:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 /**
- * Retrieve a value from Redis
+ * Retrieve a value from the database cache
  */
 export async function getRedisValue(key: string) {
+  await ensureInitialized();
+  const client = await getPool().connect();
   try {
-    const value = await redis.get(key);
-    return value ? (typeof value === "string" ? JSON.parse(value) : value) : null;
+    const result = await client.query(
+      `SELECT value FROM database_cache 
+       WHERE key = $1 AND (expires_at IS NULL OR expires_at > NOW())`,
+      [key]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const raw = result.rows[0].value;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
   } catch (error) {
-    console.error("Redis get error:", error);
+    console.error("Cache get error:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 /**
- * Delete a value from Redis
+ * Delete a value from the cache
  */
 export async function deleteRedisValue(key: string) {
+  await ensureInitialized();
+  const client = await getPool().connect();
   try {
-    await redis.del(key);
+    await client.query("DELETE FROM database_cache WHERE key = $1", [key]);
   } catch (error) {
-    console.error("Redis delete error:", error);
+    console.error("Cache delete error:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 /**
- * Rate limit check using Redis
+ * Rate limit check using database_cache table
  */
 export async function checkRateLimit(
   userId: string,
   limit: number = 10,
   windowSeconds: number = 60
 ): Promise<boolean> {
+  await ensureInitialized();
+  const client = await getPool().connect();
   try {
     const key = `rate-limit:${userId}`;
-    const current = await redis.incr(key);
+    const expiresAt = new Date(Date.now() + windowSeconds * 1000);
 
-    if (current === 1) {
-      await redis.expire(key, windowSeconds);
-    }
+    const result = await client.query(
+      `INSERT INTO rate_limits (key, count, expires_at)
+       VALUES ($1, 1, $2)
+       ON CONFLICT (key) DO UPDATE SET
+         count = CASE 
+           WHEN rate_limits.expires_at <= NOW() THEN 1
+           ELSE rate_limits.count + 1
+         END,
+         expires_at = CASE
+           WHEN rate_limits.expires_at <= NOW() THEN $2
+           ELSE rate_limits.expires_at
+         END
+       RETURNING count`,
+      [key, expiresAt]
+    );
 
-    return current <= limit;
+    const count = result.rows[0]?.count ?? 1;
+    return count <= limit;
   } catch (error) {
     console.error("Rate limit check error:", error);
     // Fail open on error
     return true;
+  } finally {
+    client.release();
   }
 }

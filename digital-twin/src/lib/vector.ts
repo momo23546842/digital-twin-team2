@@ -1,27 +1,27 @@
-import { Index } from "@upstash/vector";
+/**
+ * Vector operations using Neon PostgreSQL (vectors table)
+ * Drop-in replacement for @upstash/vector - no Upstash needed
+ */
 
-if (
-  !process.env.UPSTASH_VECTOR_REST_URL ||
-  !process.env.UPSTASH_VECTOR_REST_TOKEN
-) {
-  throw new Error(
-    "Upstash Vector credentials are not defined in environment variables"
-  );
-}
-
-export const vectorIndex = new Index({
-  url: process.env.UPSTASH_VECTOR_REST_URL,
-  token: process.env.UPSTASH_VECTOR_REST_TOKEN,
-});
+import {
+  upsertVectors as pgUpsertVectors,
+  querySimilarVectors as pgQuerySimilarVectors,
+  getVector as pgGetVector,
+  deleteVectors as pgDeleteVectors,
+} from "./postgres";
 
 /**
- * Upsert vectors into the Upstash Vector index
+ * Upsert vectors into the Neon PostgreSQL vectors table
  */
 export async function upsertVectors(
-  vectors: Array<{ id: string; vector: number[]; metadata?: Record<string, unknown> }>
+  vectors: Array<{
+    id: string;
+    vector: number[];
+    metadata?: Record<string, unknown>;
+  }>
 ) {
   try {
-    await vectorIndex.upsert(vectors);
+    await pgUpsertVectors(vectors);
   } catch (error) {
     console.error("Vector upsert error:", error);
     throw error;
@@ -29,18 +29,14 @@ export async function upsertVectors(
 }
 
 /**
- * Query similar vectors
+ * Query similar vectors using cosine similarity
  */
 export async function querySimilarVectors(
   queryVector: number[],
   topK: number = 5
 ) {
   try {
-    const results = await vectorIndex.query({
-      vector: queryVector,
-      topK,
-      includeMetadata: true,
-    });
+    const results = await pgQuerySimilarVectors(queryVector, topK);
     return results;
   } catch (error) {
     console.error("Vector query error:", error);
@@ -53,8 +49,7 @@ export async function querySimilarVectors(
  */
 export async function getVector(id: string) {
   try {
-    const result = await vectorIndex.fetch([id]);
-    return result[0] || null;
+    return await pgGetVector(id);
   } catch (error) {
     console.error("Vector fetch error:", error);
     throw error;
@@ -66,7 +61,7 @@ export async function getVector(id: string) {
  */
 export async function deleteVectors(ids: string[]) {
   try {
-    await vectorIndex.delete(ids);
+    await pgDeleteVectors(ids);
   } catch (error) {
     console.error("Vector delete error:", error);
     throw error;
