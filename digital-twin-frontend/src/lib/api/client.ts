@@ -1,16 +1,28 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from "axios";
 import { API_BASE_URL, API_TIMEOUT } from "@/constants/api";
 
+type RedirectCallback = (url: string) => void;
+
+let redirectCallback: RedirectCallback | null = null;
+
+export function setApiRedirectCallback(callback: RedirectCallback) {
+  redirectCallback = callback;
+}
+
 class ApiClient {
   private client: AxiosInstance;
+  private onUnauthorizedCallback: (() => void) | null = null;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
+      // Use the proxy API route instead of direct backend URL
+      baseURL: "/api/proxy",
       timeout: API_TIMEOUT,
       headers: {
         "Content-Type": "application/json",
       },
+      // Enable sending cookies with requests
+      withCredentials: true,
     });
 
     // Request interceptor
@@ -33,7 +45,12 @@ class ApiClient {
         if (error.response?.status === 401) {
           // Handle unauthorized
           localStorage.removeItem("auth_token");
-          window.location.href = "/login";
+          // Use callback if available, fallback to window.location
+          if (redirectCallback) {
+            redirectCallback("/login");
+          } else {
+            window.location.href = "/login";
+          }
         }
         return Promise.reject(error);
       }
@@ -44,15 +61,15 @@ class ApiClient {
     return this.client.get<T>(url, config);
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig) {
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
     return this.client.post<T>(url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig) {
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
     return this.client.put<T>(url, data, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig) {
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
     return this.client.patch<T>(url, data, config);
   }
 

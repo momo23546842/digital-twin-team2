@@ -1,4 +1,4 @@
-import { getPool } from "./postgres";
+import { getPool, ensureInitialized } from "./postgres";
 
 /**
  * Store a value in the database with optional TTL (in seconds)
@@ -8,6 +8,8 @@ export async function setDatabaseValue(
   value: string | object,
   ttl?: number
 ) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const serialized =
@@ -37,6 +39,8 @@ export async function setDatabaseValue(
  * Retrieve a value from the database
  */
 export async function getDatabaseValue(key: string) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const result = await client.query(
@@ -67,6 +71,8 @@ export async function getDatabaseValue(key: string) {
  * Delete a value from the database
  */
 export async function deleteDatabaseValue(key: string) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     await client.query("DELETE FROM database_cache WHERE key = $1", [key]);
@@ -82,6 +88,8 @@ export async function deleteDatabaseValue(key: string) {
  * Cleanup expired entries
  */
 export async function cleanupExpiredEntries() {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     await client.query(`
