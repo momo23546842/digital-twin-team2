@@ -1,5 +1,22 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, Crimson_Pro } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
+import { ApiProvider } from "@/components/providers/ApiProvider";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-crimson-pro",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Digital Twin - Your Professional Profile, Always Available",
@@ -16,12 +33,10 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
-      <body
-        className="bg-gradient-to-br from-purple-600 to-purple-700"
-        style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-        suppressHydrationWarning
-      >
-        {children}
+      <body className="font-space-grotesk bg-gradient-to-br from-purple-600 to-purple-700" suppressHydrationWarning>
+        <ApiProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ApiProvider>
       </body>
     </html>
   );

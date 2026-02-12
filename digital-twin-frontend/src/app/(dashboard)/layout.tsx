@@ -1,7 +1,3 @@
-'use client';
-
-import { ApiClientProvider } from '@/providers/ApiClientProvider';
-
 export default function DashboardLayout({
   children,
 }: {

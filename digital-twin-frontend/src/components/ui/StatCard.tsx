@@ -6,6 +6,7 @@ interface StatCardProps {
   value: string | number;
   trend?: string;
   trendColor?: string;
+  title?: string;
   description: string;
 }
 
@@ -15,6 +16,7 @@ export function StatCard({
   value,
   trend,
   trendColor = 'text-green-600',
+  title,
   description,
 }: StatCardProps) {
   return (

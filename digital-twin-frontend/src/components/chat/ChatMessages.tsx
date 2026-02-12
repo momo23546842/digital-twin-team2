@@ -1,43 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import type { ChatMessageType } from '@/types';
 
-interface ChatMessage {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: string;
+interface ChatMessagesProps {
+  messages: ChatMessageType[];
+  isTyping?: boolean;
 }
 
-export function ChatMessages() {
-  const [messages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      content:
-        "Hello! I'm your Digital Twin. I can help answer questions about your background, schedule meetings, or provide insights about your career. What would you like to know?",
-      role: 'assistant',
-      timestamp: 'Just now',
-    },
-    {
-      id: '2',
-      content:
-        "Hi! I'm looking for a senior developer with Next.js experience. Can you tell me about your background?",
-      role: 'user',
-      timestamp: 'Just now',
-    },
-  ])
-  const [isTyping] = useState(false);
+// Utility function to format timestamps as relative time
+const formatTimestamp = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
+
+export function ChatMessages({ messages, isTyping = false }: ChatMessagesProps) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-white to-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="chatMessages" className="space-y-6">
-          {messages.map((msg) =>
-            msg.role === 'assistant' ? (
-              <AssistantMessage key={msg.id} content={msg.content} timestamp={msg.timestamp} />
-            ) : (
-              <UserMessage key={msg.id} content={msg.content} timestamp={msg.timestamp} />
-            )
+          {messages.length === 0 ? (
+            <div className="text-center text-gray-500 mt-8">
+              <p>No messages yet. Start a conversation!</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const timestamp = formatTimestamp(msg.createdAt);
+              return msg.role === 'assistant' ? (
+                <AssistantMessage key={msg.id} content={msg.content} timestamp={timestamp} />
+              ) : (
+                <UserMessage key={msg.id} content={msg.content} timestamp={timestamp} />
+              );
+            })
           )}
 
           {isTyping && <TypingIndicator />}

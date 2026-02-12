@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-space-grotesk)", "sans-serif"],
+        serif: ["var(--font-crimson-pro)", "serif"],
+      },
       colors: {
         primary: {
           50: "#f0f4ff",

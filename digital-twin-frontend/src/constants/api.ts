@@ -1,7 +1,17 @@
 // API Constants
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
-export const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000");
+
+// Parse timeout with validation to ensure we always have a valid number
+const parseTimeout = (value: string | undefined): number => {
+  const defaultTimeout = 30000;
+  if (!value) return defaultTimeout;
+  
+  const parsed = parseInt(value, 10);
+  return !isNaN(parsed) && parsed > 0 ? parsed : defaultTimeout;
+};
+
+export const API_TIMEOUT = parseTimeout(process.env.NEXT_PUBLIC_API_TIMEOUT);
 
 export const API_ENDPOINTS = {
   // Chat
