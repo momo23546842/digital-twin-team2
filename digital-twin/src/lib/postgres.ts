@@ -2,8 +2,9 @@ import { Pool, PoolClient } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
+let initialized = false;
 
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not defined");
@@ -14,6 +15,18 @@ function getPool(): Pool {
     });
   }
   return pool;
+}
+
+export async function ensureInitialized() {
+  if (initialized) return;
+  try {
+    await initializeDatabase();
+    initialized = true;
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    // Don't set initialized to true so it retries next time
+    throw error;
+  }
 }
 
 /**
@@ -115,6 +128,8 @@ export async function upsertVectors(
 ) {
   if (vectors.length === 0) return;
 
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     // Build the VALUES clause for bulk insert
@@ -128,7 +143,10 @@ export async function upsertVectors(
       );
       values.push(vec.id);
       values.push(JSON.stringify(vec.vector)); // Store as JSONB
-      values.push(vec.metadata?.content || ""); // Store content separately
+      // Extract content from metadata with type checking
+      const content = vec.metadata?.content;
+      const contentStr = typeof content === 'string' ? content : "";
+      values.push(contentStr);
       values.push(JSON.stringify(vec.metadata || {}));
     });
 
@@ -137,6 +155,7 @@ export async function upsertVectors(
       VALUES ${placeholders.join(",")}
       ON CONFLICT (id) DO UPDATE SET
         embedding = EXCLUDED.embedding,
+        content = EXCLUDED.content,
         metadata = EXCLUDED.metadata,
         updated_at = CURRENT_TIMESTAMP;
     `;
@@ -158,6 +177,8 @@ export async function querySimilarVectors(
   queryVector: number[],
   topK: number = 5
 ) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const queryEmbed = JSON.stringify(queryVector);
@@ -175,9 +196,12 @@ export async function querySimilarVectors(
             SELECT SUM((v1.value::numeric) * (v2.value::numeric))
             FROM jsonb_array_elements_text(embedding) WITH ORDINALITY v1(value, ord)
             JOIN jsonb_array_elements_text($1::jsonb) WITH ORDINALITY v2(value, ord) ON v1.ord = v2.ord
-          ) / (
-            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
-            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
+          ) / NULLIF(
+            (
+              SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
+              SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
+            ),
+            0
           ) AS similarity
         FROM vectors
       )
@@ -190,12 +214,26 @@ export async function querySimilarVectors(
       [queryEmbed, topK]
     );
 
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      score: row.similarity || 0,
-      text_chunk: row.content,
-      metadata: row.metadata || {},
-    }));
+    return result.rows.map((row: any) => {
+      const rawSimilarity = row.similarity;
+      let similarityScore: number;
+
+      if (rawSimilarity === null || rawSimilarity === undefined) {
+        similarityScore = 0;
+      } else if (typeof rawSimilarity === "number") {
+        similarityScore = rawSimilarity;
+      } else {
+        const parsed = parseFloat(rawSimilarity);
+        similarityScore = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
+      return {
+        id: row.id,
+        score: similarityScore,
+        text_chunk: row.content,
+        metadata: row.metadata || {},
+      };
+    });
   } catch (error) {
     console.error("Vector query error:", error);
     throw error;
@@ -247,6 +285,41 @@ export async function deleteVectors(ids: string[]) {
     );
   } catch (error) {
     console.error("Vector delete error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Store ingestion metadata
+ */
+export async function storeIngestionMetadata(
+  id: string,
+  userId: string,
+  documentCount: number,
+  documents: Array<{ id: string; title?: string }>,
+  ttlSeconds?: number
+) {
+  const client = await getPool().connect();
+  try {
+    const expiresAt = ttlSeconds ? new Date(Date.now() + ttlSeconds * 1000) : null;
+
+    await client.query(
+      `
+      INSERT INTO ingestion_metadata (id, user_id, document_count, documents, expires_at)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (id) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        document_count = EXCLUDED.document_count,
+        documents = EXCLUDED.documents,
+        expires_at = EXCLUDED.expires_at,
+        timestamp = CURRENT_TIMESTAMP;
+      `,
+      [id, userId, documentCount, JSON.stringify(documents), expiresAt]
+    );
+  } catch (error) {
+    console.error("Ingestion metadata storage error:", error);
     throw error;
   } finally {
     client.release();

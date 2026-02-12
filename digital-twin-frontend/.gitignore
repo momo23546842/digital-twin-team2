@@ -9,9 +9,13 @@ node_modules/
 # Next.js
 /.next/
 /out/
+tsconfig.tsbuildinfo
 
 # Production
 /build
+
+# TypeScript
+*.tsbuildinfo
 
 # Misc
 .DS_Store
@@ -33,5 +37,9 @@ yarn-error.log*
 *.swo
 *~
 
+# TypeScript
+*.tsbuildinfo
+
 # OS
 Thumbs.db
+tsconfig.tsbuildinfo
