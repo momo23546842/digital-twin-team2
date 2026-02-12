@@ -9,7 +9,14 @@ export function useChat() {
 
   const sendMessage = useCallback(async (content: string) => {
     setIsLoading(true);
-    setError(null);
+    // Add user message to state immediately (optimistic update)
+    const userMessage: ChatMessageType = {
+      id: Date.now().toString(),
+      userId: '',
+      content,
+      role: 'user',
+      createdAt: new Date(),
+    };
 
     // Create and add user message to the conversation immediately
     const userMessage: ChatMessageType = {
@@ -24,11 +31,11 @@ export function useChat() {
 
     try {
       const response = await chatApi.sendMessage(content);
-      // Add assistant's response to the conversation
+      // Add assistant response
       setMessages((prev) => [...prev, response.data as ChatMessageType]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
-      // Remove the user message on error to avoid showing unsent messages
+      // Remove user message on failure (rollback optimistic update)
       setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
     } finally {
       setIsLoading(false);
