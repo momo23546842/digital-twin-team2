@@ -8,7 +8,8 @@
  *   npx ts-node --skip-project src/lib/cleanup-db.ts
  */
 
-import { cleanupExpiredEntries, closeDatabase } from "./postgres";
+import { cleanupExpiredEntries } from "./db";
+import { closeDatabase } from "./postgres";
 
 async function main() {
   try {
@@ -17,10 +18,9 @@ async function main() {
     console.log("✓ Database cleanup completed successfully!");
   } catch (error) {
     console.error("✗ Database cleanup failed:", error);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
     await closeDatabase();
-    process.exit(0);
   }
 }
 
