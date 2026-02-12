@@ -1,21 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
-    // In a real application, you might want to:
-    // 1. Invalidate the token on the backend
-    // 2. Clear session data
-    // For now, we just return a success response
-    // The client will handle removing the token from localStorage
+    // Clear the auth cookies with the same attributes used when setting them
+    const cookieStore = await cookies();
+    cookieStore.delete({
+      name: "auth_token",
+      path: "/",
+    });
+    cookieStore.delete({
+      name: "refresh_token",
+      path: "/",
+    });
 
-    return NextResponse.json(
-      { message: 'Logout successful' },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
