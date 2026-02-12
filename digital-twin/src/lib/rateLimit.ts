@@ -1,5 +1,8 @@
 import { getPool } from "./postgres";
+<<<<<<< HEAD
 import { ensureInitialized } from "./postgres";
+=======
+>>>>>>> origin/main
 
 /**
  * Check rate limit for a user
@@ -10,13 +13,17 @@ export async function checkRateLimit(
   limit: number = 10,
   windowSeconds: number = 60
 ): Promise<boolean> {
+<<<<<<< HEAD
   await ensureInitialized();
 
+=======
+>>>>>>> origin/main
   const client = await getPool().connect();
   try {
     const key = `rate-limit:${userId}`;
     const expiresAt = new Date(Date.now() + windowSeconds * 1000);
 
+<<<<<<< HEAD
     // Atomically insert or update the rate limit entry
     const upsertResult = await client.query(
       `
@@ -38,6 +45,38 @@ export async function checkRateLimit(
 
     const currentCount = upsertResult.rows[0].count;
     return currentCount <= limit;
+=======
+    // Try to update the count if the key exists and hasn't expired
+    const updateResult = await client.query(
+      `
+      UPDATE rate_limits
+      SET count = count + 1
+      WHERE key = $1 AND expires_at > NOW()
+      RETURNING count;
+      `,
+      [key]
+    );
+
+    if (updateResult.rows.length > 0) {
+      // Key exists and hasn't expired
+      const currentCount = updateResult.rows[0].count;
+      return currentCount <= limit;
+    }
+
+    // Key doesn't exist or has expired, create a new one
+    await client.query(
+      `
+      INSERT INTO rate_limits (key, count, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (key) DO UPDATE SET
+        count = EXCLUDED.count,
+        expires_at = EXCLUDED.expires_at;
+      `,
+      [key, 1, expiresAt]
+    );
+
+    return true; // First request in the window is always allowed
+>>>>>>> origin/main
   } catch (error) {
     console.error("Rate limit check error:", error);
     // Fail open on error - allow the request

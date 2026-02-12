@@ -3,10 +3,16 @@
 import ChatInput from "@/components/ChatInput";
 import DocumentUpload from "@/components/DocumentUpload";
 import MessageList from "@/components/MessageList";
+<<<<<<< HEAD
 import VoiceChat from "@/components/VoiceChat";
 import type { Message } from "@/types";
 import { Bot, Sparkles } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
+=======
+import type { Message } from "@/types";
+import { Bot, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+>>>>>>> origin/main
 
 export default function ChatPane() {
   const [messages, setMessages] = useState<Message[]>([
@@ -14,16 +20,23 @@ export default function ChatPane() {
       id: "welcome",
       role: "assistant",
       content:
+<<<<<<< HEAD
         "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them! You can also use voice - just click 'Start Call' to have a conversation.",
+=======
+        "Hey! 👋 I'm your Digital Twin - upload a resume, bio, or any personal docs and I'll become that person. Then you can chat with 'them' and I'll respond as if I were them!",
+>>>>>>> origin/main
       timestamp: new Date(),
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
+<<<<<<< HEAD
   
   // Voice-related state
   const [autoSpeak, setAutoSpeak] = useState<boolean>(true);
   const [lastAssistantMessage, setLastAssistantMessage] = useState<string>("");
+=======
+>>>>>>> origin/main
 
   useEffect(() => {
     // Initialize session ID
@@ -50,8 +63,11 @@ export default function ChatPane() {
     setIsLoading(true);
 
     try {
+<<<<<<< HEAD
       console.log('[ChatPane] Sending to /api/chat...');
       
+=======
+>>>>>>> origin/main
       // Call chat API
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -65,6 +81,7 @@ export default function ChatPane() {
             { role: "user", content },
           ],
           sessionId,
+<<<<<<< HEAD
           input_method: inputMethod,
         }),
       });
@@ -108,6 +125,19 @@ export default function ChatPane() {
         console.log('[ChatPane] Setting message for TTS:', data.message.content.substring(0, 50) + '...');
         setLastAssistantMessage(data.message.content);
       }
+=======
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Add assistant message
+      setMessages((prev) => [...prev, data.message]);
+>>>>>>> origin/main
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
@@ -123,12 +153,15 @@ export default function ChatPane() {
     }
   }, [messages, sessionId, autoSpeak]);
 
+<<<<<<< HEAD
   // Handle voice transcript from VoiceChat component
   const handleVoiceTranscript = useCallback((text: string, inputMethod: 'voice') => {
     console.log('[ChatPane] Voice transcript received:', text);
     handleSendMessage(text, inputMethod);
   }, [handleSendMessage]);
 
+=======
+>>>>>>> origin/main
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-white">
       {/* Background decoration */}
@@ -174,6 +207,7 @@ export default function ChatPane() {
           <div className="bg-white border-t border-gray-100">
             {/* Document Upload */}
             <DocumentUpload isLoading={isLoading} />
+<<<<<<< HEAD
 
             {/* Voice Chat Controls */}
             <div className="px-4 py-3 border-t border-gray-100">
@@ -189,6 +223,11 @@ export default function ChatPane() {
 
             {/* Input */}
             <ChatInput onSubmit={(content) => handleSendMessage(content, 'text')} isLoading={isLoading} />
+=======
+
+            {/* Input */}
+            <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+>>>>>>> origin/main
           </div>
         </div>
       </div>

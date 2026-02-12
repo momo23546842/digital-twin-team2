@@ -9,12 +9,19 @@
     "start": "node build/index.js"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@modelcontextprotocol/sdk": "^1.0.0",
     "pg": "^8.11.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/pg": "^8.11.0",
+=======
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+>>>>>>> origin/main
     "typescript": "^5"
   }
 }

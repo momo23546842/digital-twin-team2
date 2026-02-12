@@ -2,9 +2,14 @@ import { Pool, PoolClient } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
+<<<<<<< HEAD
 let initialized = false;
 
 export function getPool(): Pool {
+=======
+
+function getPool(): Pool {
+>>>>>>> origin/main
   if (!pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not defined");
@@ -17,6 +22,7 @@ export function getPool(): Pool {
   return pool;
 }
 
+<<<<<<< HEAD
 export async function ensureInitialized() {
   if (initialized) return;
   try {
@@ -29,6 +35,8 @@ export async function ensureInitialized() {
   }
 }
 
+=======
+>>>>>>> origin/main
 /**
  * Initialize the database - create tables if they don't exist
  */
@@ -107,6 +115,7 @@ export async function initializeDatabase() {
       ON rate_limits(expires_at);
     `);
 
+<<<<<<< HEAD
     // Ensure auth tables are present
     try {
       await initializeAuthTables();
@@ -121,6 +130,8 @@ export async function initializeDatabase() {
       console.warn('Could not initialize app tables:', err);
     }
 
+=======
+>>>>>>> origin/main
     console.log("Database initialized successfully");
   } catch (error) {
     console.error("Database initialization error:", error);
@@ -130,6 +141,7 @@ export async function initializeDatabase() {
   }
 }
 
+<<<<<<< HEAD
 // Create users and sessions tables if they don't exist
 export async function initializeAuthTables() {
   const client = await getPool().connect();
@@ -269,6 +281,8 @@ async function initializeAppTables(client: PoolClient) {
   `);
 }
 
+=======
+>>>>>>> origin/main
 /**
  * Upsert vectors into the database
  */
@@ -281,8 +295,11 @@ export async function upsertVectors(
 ) {
   if (vectors.length === 0) return;
 
+<<<<<<< HEAD
   await ensureInitialized();
 
+=======
+>>>>>>> origin/main
   const client = await getPool().connect();
   try {
     // Build the VALUES clause for bulk insert
@@ -296,10 +313,14 @@ export async function upsertVectors(
       );
       values.push(vec.id);
       values.push(JSON.stringify(vec.vector)); // Store as JSONB
+<<<<<<< HEAD
       // Extract content from metadata with type checking
       const content = vec.metadata?.content;
       const contentStr = typeof content === 'string' ? content : "";
       values.push(contentStr);
+=======
+      values.push(vec.metadata?.content || ""); // Store content separately
+>>>>>>> origin/main
       values.push(JSON.stringify(vec.metadata || {}));
     });
 
@@ -308,7 +329,10 @@ export async function upsertVectors(
       VALUES ${placeholders.join(",")}
       ON CONFLICT (id) DO UPDATE SET
         embedding = EXCLUDED.embedding,
+<<<<<<< HEAD
         content = EXCLUDED.content,
+=======
+>>>>>>> origin/main
         metadata = EXCLUDED.metadata,
         updated_at = CURRENT_TIMESTAMP;
     `;
@@ -330,8 +354,11 @@ export async function querySimilarVectors(
   queryVector: number[],
   topK: number = 5
 ) {
+<<<<<<< HEAD
   await ensureInitialized();
 
+=======
+>>>>>>> origin/main
   const client = await getPool().connect();
   try {
     const queryEmbed = JSON.stringify(queryVector);
@@ -349,12 +376,18 @@ export async function querySimilarVectors(
             SELECT SUM((v1.value::numeric) * (v2.value::numeric))
             FROM jsonb_array_elements_text(embedding) WITH ORDINALITY v1(value, ord)
             JOIN jsonb_array_elements_text($1::jsonb) WITH ORDINALITY v2(value, ord) ON v1.ord = v2.ord
+<<<<<<< HEAD
           ) / NULLIF(
             (
               SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
               SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
             ),
             0
+=======
+          ) / (
+            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
+            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
+>>>>>>> origin/main
           ) AS similarity
         FROM vectors
       )
@@ -367,6 +400,7 @@ export async function querySimilarVectors(
       [queryEmbed, topK]
     );
 
+<<<<<<< HEAD
     return result.rows.map((row: any) => {
       const rawSimilarity = row.similarity;
       let similarityScore: number;
@@ -387,6 +421,14 @@ export async function querySimilarVectors(
         metadata: row.metadata || {},
       };
     });
+=======
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      score: row.similarity || 0,
+      text_chunk: row.content,
+      metadata: row.metadata || {},
+    }));
+>>>>>>> origin/main
   } catch (error) {
     console.error("Vector query error:", error);
     throw error;
@@ -445,6 +487,7 @@ export async function deleteVectors(ids: string[]) {
 }
 
 /**
+<<<<<<< HEAD
  * Store ingestion metadata
  */
 export async function storeIngestionMetadata(
@@ -480,6 +523,8 @@ export async function storeIngestionMetadata(
 }
 
 /**
+=======
+>>>>>>> origin/main
  * Export getPool for use in other modules
  */
 export { getPool };

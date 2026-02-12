@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateEmbeddings } from "@/lib/embeddings";
+<<<<<<< HEAD
 import { upsertVectors, storeIngestionMetadata, ensureInitialized } from "@/lib/postgres";
+=======
+import { upsertVectors } from "@/lib/postgres";
+import { setDatabaseValue } from "@/lib/db";
+>>>>>>> origin/main
 
 export const runtime = "nodejs";
 
@@ -104,6 +109,7 @@ export async function POST(req: NextRequest) {
     // Upsert vectors to PostgreSQL
     await upsertVectors(allVectors);
 
+<<<<<<< HEAD
     // Store ingestion metadata in PostgreSQL ingestion_metadata table
     const ingestKey = `ingest:${userId}:${Date.now()}`;
     await storeIngestionMetadata(
@@ -111,6 +117,17 @@ export async function POST(req: NextRequest) {
       userId,
       documents.length,
       documents.map((d: any) => ({ id: d.id, title: d.title })),
+=======
+    // Store ingestion metadata in PostgreSQL
+    const ingestKey = `ingest:${userId}:${Date.now()}`;
+    await setDatabaseValue(
+      ingestKey,
+      {
+        documentCount: documents.length,
+        timestamp: new Date().toISOString(),
+        documents: documents.map((d: any) => ({ id: d.id, title: d.title })),
+      },
+>>>>>>> origin/main
       86400 * 7 // 7 days TTL
     );
 

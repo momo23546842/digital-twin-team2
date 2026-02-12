@@ -3,7 +3,10 @@ import { callGroqChat } from "@/lib/groq";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { generateEmbeddings } from "@/lib/embeddings";
 import { querySimilarVectors } from "@/lib/postgres";
+<<<<<<< HEAD
 import { callMcpTool, listMcpTools } from "@/lib/mcp-client";
+=======
+>>>>>>> origin/main
 import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 
 export const runtime = "nodejs";
@@ -13,6 +16,7 @@ export const runtime = "nodejs";
  */
 async function getRAGContext(userMessage: string): Promise<string> {
   try {
+<<<<<<< HEAD
     console.log("[RAG] Starting context retrieval");
     
     // Generate embedding for user message
@@ -36,21 +40,49 @@ async function getRAGContext(userMessage: string): Promise<string> {
 
     console.log("[RAG] Found", results.length, "results");
 
+=======
+    // Generate embedding for user message
+    const messageEmbedding = await generateEmbeddings(userMessage);
+
+    // Query similar vectors
+    const results = await querySimilarVectors(messageEmbedding, 3);
+
+    if (!results || results.length === 0) {
+      console.log("RAG: No results found");
+      return "";
+    }
+
+    console.log("RAG: Found", results.length, "results");
+
+>>>>>>> origin/main
     // Extract and format context from results
     const contextParts = results
       .map((result: any, index: number) => {
         const metadata = result.metadata || {};
         const content = metadata.content || metadata.title || "";
         
+<<<<<<< HEAD
         console.log(`[RAG] Result ${index}:`, {
           hasMetadata: !!result.metadata,
           contentType: typeof content,
           contentLength: typeof content === "string" ? content.length : 0,
+=======
+        console.log(`RAG result ${index}:`, {
+          hasMetadata: !!result.metadata,
+          contentType: typeof content,
+          contentLength: typeof content === "string" ? content.length : 0,
+          contentPreview: typeof content === "string" ? content.slice(0, 100) : "N/A",
+          score: result.score,
+>>>>>>> origin/main
         });
         
         // Ensure content is a valid string
         if (typeof content !== "string" || content.length === 0) {
+<<<<<<< HEAD
           console.warn("[RAG] Skipping empty or non-string metadata content");
+=======
+          console.warn("Skipping empty or non-string metadata content");
+>>>>>>> origin/main
           return "";
         }
         
@@ -59,6 +91,7 @@ async function getRAGContext(userMessage: string): Promise<string> {
       .filter((text: string) => text.length > 0);
 
     if (contextParts.length === 0) {
+<<<<<<< HEAD
       console.log("[RAG] No valid context parts after filtering");
       return "";
     }
@@ -154,12 +187,23 @@ async function getMcpContext(userMessage: string): Promise<string> {
     return `\n\nAdditional context from tools:\n${mcpResults.join("\n---\n")}`;
   } catch (error) {
     console.error("[MCP] Context retrieval error:", error);
+=======
+      console.log("RAG: No valid context parts after filtering");
+      return "";
+    }
+
+    console.log("RAG: Using", contextParts.length, "context parts");
+    return `\n\nRelevant context from knowledge base:\n${contextParts.join("\n---\n")}`;
+  } catch (error) {
+    console.error("RAG context retrieval error:", error);
+>>>>>>> origin/main
     return "";
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+<<<<<<< HEAD
     console.log("[CHAT API] Request received");
     
     // Extract user ID for rate limiting
@@ -183,6 +227,21 @@ export async function POST(req: NextRequest) {
 
     // Parse request
     console.log("[CHAT API] Parsing request");
+=======
+    // Extract user ID for rate limiting
+    const userId = req.headers.get("x-user-id") || "anonymous";
+
+    // Rate limit check
+    const isAllowed = await checkRateLimit(userId, 10, 60);
+    if (!isAllowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+    }
+
+    // Parse request
+>>>>>>> origin/main
     const payload: ChatRequestPayload = await req.json();
 
     if (!payload.messages || payload.messages.length === 0) {
@@ -194,6 +253,7 @@ export async function POST(req: NextRequest) {
 
     // Get the latest user message for RAG context
     const lastMessage = payload.messages[payload.messages.length - 1];
+<<<<<<< HEAD
 
     // Fetch RAG context and MCP tool context in parallel
     console.log("[CHAT API] Fetching RAG and MCP context");
@@ -208,6 +268,12 @@ export async function POST(req: NextRequest) {
     console.log("[CHAT API] Context fetched. RAG:", !!ragContext, "MCP:", !!mcpContext);
 
     const combinedContext = ragContext + mcpContext;
+=======
+    const ragContext =
+      lastMessage.role === "user"
+        ? await getRAGContext(lastMessage.content)
+        : "";
+>>>>>>> origin/main
 
     // Format messages for Groq API
     const groqMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = payload.messages.map((msg) => ({
@@ -215,6 +281,7 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }));
 
+<<<<<<< HEAD
     // Add system message - Digital Twin persona with VOICE SUPPORT
     const voiceInstructions = `
 VOICE INTERACTION SUPPORT:
@@ -229,6 +296,12 @@ VOICE INTERACTION SUPPORT:
     const systemPrompt = combinedContext
       ? `You ARE the person described in the following context. You are their Digital Twin - respond in FIRST PERSON as if you are them.
 ${voiceInstructions}
+=======
+    // Add system message - Digital Twin persona
+    const systemPrompt = ragContext
+      ? `You ARE the person described in the following context. You are their Digital Twin - respond in FIRST PERSON as if you are them.
+
+>>>>>>> origin/main
 Rules:
 - Speak as "I", "me", "my" - you ARE this person
 - Adopt their personality, tone, and communication style based on the context
@@ -237,6 +310,7 @@ Rules:
 - If asked about experiences, skills, or background, draw from the context
 - If something isn't in the context, you can say "I don't think I've mentioned that" or make reasonable inferences
 - Be friendly, authentic, and personable - this is a conversation, not an interview
+<<<<<<< HEAD
 - For voice conversations, keep initial responses brief (1-3 sentences), expand if asked
 
 Context about you (the person you're embodying):
@@ -246,6 +320,13 @@ ${voiceInstructions}
 No personal documents have been uploaded yet. 
 Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.
 Be friendly and conversational. Voice chat is fully supported!`;
+=======
+
+Context about you (the person you're embodying):
+${ragContext}`
+      : `You are a Digital Twin assistant. No personal documents have been uploaded yet. 
+         Ask the user to upload documents (like a resume, bio, or personal info) so you can become their Digital Twin and respond as them.`;
+>>>>>>> origin/main
 
     groqMessages.unshift({
       role: "system",
@@ -253,9 +334,13 @@ Be friendly and conversational. Voice chat is fully supported!`;
     });
 
     // Call Groq API
+<<<<<<< HEAD
     console.log("[CHAT API] Calling Groq API");
     const response = await callGroqChat(groqMessages);
     console.log("[CHAT API] Groq response received");
+=======
+    const response = await callGroqChat(groqMessages);
+>>>>>>> origin/main
 
     // Build response
     const responsePayload: ChatResponsePayload = {
@@ -267,13 +352,17 @@ Be friendly and conversational. Voice chat is fully supported!`;
         timestamp: new Date(),
         metadata: {
           ragEnabled: !!ragContext,
+<<<<<<< HEAD
           mcpEnabled: !!mcpContext,
+=======
+>>>>>>> origin/main
           contextCount: ragContext ? 3 : 0,
         },
       },
       sessionId: payload.sessionId || `session-${Date.now()}`,
     };
 
+<<<<<<< HEAD
     console.log("[CHAT API] Sending response");
     return NextResponse.json(responsePayload);
   } catch (error) {
@@ -284,6 +373,13 @@ Be friendly and conversational. Voice chat is fully supported!`;
     
     return NextResponse.json(
       { error: errorMessage, details: process.env.NODE_ENV === "development" ? errorStack : undefined },
+=======
+    return NextResponse.json(responsePayload);
+  } catch (error) {
+    console.error("Chat API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+>>>>>>> origin/main
       { status: 500 }
     );
   }
