@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Crimson_Pro } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
+import { ApiProvider } from "@/components/providers/ApiProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -27,12 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${crimsonPro.variable}`}>
-      <body
-        className={`${spaceGrotesk.className} bg-gradient-to-br from-purple-600 to-purple-700`}
-        suppressHydrationWarning
-      >
-        {children}
+    <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500;600&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-space-grotesk bg-gradient-to-br from-purple-600 to-purple-700" suppressHydrationWarning>
+        <ApiProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ApiProvider>
       </body>
     </html>
   );
