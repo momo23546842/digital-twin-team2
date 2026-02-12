@@ -55,7 +55,9 @@ export default function ChatPane() {
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error("API Error Response:", errorData);
+        throw new Error(`API error: ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();

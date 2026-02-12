@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateEmbeddings } from "@/lib/embeddings";
-import { upsertVectors } from "@/lib/postgres";
-import { setDatabaseValue } from "@/lib/db";
+import { upsertVectors, storeIngestionMetadata, ensureInitialized } from "@/lib/postgres";
 
 export const runtime = "nodejs";
 
@@ -45,6 +44,9 @@ function chunkText(text: string, chunkSize: number = MAX_CHUNK_SIZE): string[] {
  */
 export async function POST(req: NextRequest) {
   try {
+    // Initialize database tables on first request
+    await ensureInitialized();
+
     const payload = await req.json();
 
     const { documents, userId = "anonymous" } = payload;
@@ -102,15 +104,13 @@ export async function POST(req: NextRequest) {
     // Upsert vectors to PostgreSQL
     await upsertVectors(allVectors);
 
-    // Store ingestion metadata in PostgreSQL
+    // Store ingestion metadata in PostgreSQL ingestion_metadata table
     const ingestKey = `ingest:${userId}:${Date.now()}`;
-    await setDatabaseValue(
+    await storeIngestionMetadata(
       ingestKey,
-      {
-        documentCount: documents.length,
-        timestamp: new Date().toISOString(),
-        documents: documents.map((d: any) => ({ id: d.id, title: d.title })),
-      },
+      userId,
+      documents.length,
+      documents.map((d: any) => ({ id: d.id, title: d.title })),
       86400 * 7 // 7 days TTL
     );
 

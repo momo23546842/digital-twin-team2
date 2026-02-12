@@ -143,7 +143,8 @@ export default function DocumentUpload({
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed (${response.status})`);
       }
 
       const result = await response.json();
