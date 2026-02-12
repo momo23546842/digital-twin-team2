@@ -11,6 +11,7 @@ export function setApiRedirectCallback(callback: RedirectCallback) {
 
 class ApiClient {
   private client: AxiosInstance;
+  private onUnauthorizedCallback: (() => void) | null = null;
 
   constructor() {
     this.client = axios.create({
