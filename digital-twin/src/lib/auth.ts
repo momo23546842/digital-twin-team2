@@ -30,6 +30,23 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
+ * Get JWT secret, fail fast if not set in production
+ */
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET must be set in production');
+    }
+    console.warn('WARNING: Using default JWT secret in development. Set JWT_SECRET env var.');
+    return 'dev-secret-key-CHANGE-IN-PRODUCTION';
+  }
+  
+  return secret;
+}
+
+/**
  * Generate a secure authentication token (JWT-like)
  */
 export function generateToken(
@@ -47,7 +64,7 @@ export function generateToken(
   );
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = crypto
-    .createHmac('sha256', process.env.JWT_SECRET || 'dev-secret-key')
+    .createHmac('sha256', getJwtSecret())
     .update(`${header}.${body}`)
     .digest('base64url');
 
@@ -66,11 +83,16 @@ export function verifyToken(token: string): { userId: string } | null {
 
     // Reconstruct and verify signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.JWT_SECRET || 'dev-secret-key')
+      .createHmac('sha256', getJwtSecret())
       .update(`${header}.${body}`)
       .digest('base64url');
 
-    if (signature !== expectedSignature) {
+    // Use timing-safe comparison
+    const signatureBuffer = Buffer.from(signature, 'base64url');
+    const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
+    
+    if (signatureBuffer.length !== expectedBuffer.length || 
+        !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       return null;
     }
 

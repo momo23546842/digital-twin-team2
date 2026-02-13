@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": "user_example_1",
+      "email": "user1@example.invalid",
+      "password": "$2b$10$examplehashforuser1xxxxxxxxxxxxxx0000000000000000000000",
+      "name": "Example User 1"
+    },
+    {
+      "id": "user_example_2",
+      "email": "user2@example.invalid",
+      "password": "$2b$10$examplehashforuser2xxxxxxxxxxxxxx0000000000000000000000",
+      "name": "Example User 2"
+    },
+    {
+      "id": "user_example_3",
+      "email": "user3@example.invalid",
+      "password": "$2b$10$examplehashforuser3xxxxxxxxxxxxxx0000000000000000000000",
+      "name": "Example User 3"
+    }
+  ]
+}

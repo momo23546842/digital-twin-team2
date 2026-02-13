@@ -56,7 +56,7 @@ function getProcess(): ChildProcess {
   mcpProcess = spawn("npx", ["tsx", serverEntry], {
     stdio: ["pipe", "pipe", "pipe"],
     cwd: serverDir,
-    shell: true,
+    shell: false,
     env: {
       ...process.env,
       // Pass DATABASE_URL so the MCP server can access the DB
@@ -121,18 +121,33 @@ function send(method: string, params?: Record<string, unknown>): Promise<JsonRpc
       ...(params ? { params } : {}),
     };
 
-    pending.set(id, { resolve, reject });
+    // Store timeout handle so we can clear it
+    let timeoutHandle: NodeJS.Timeout | undefined;
+
+    pending.set(id, { 
+      resolve: (response: JsonRpcResponse) => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        pending.delete(id);
+        resolve(response);
+      }, 
+      reject: (error: Error) => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        pending.delete(id);
+        reject(error);
+      }
+    });
 
     const payload = JSON.stringify(request) + "\n";
     proc.stdin!.write(payload, (err) => {
       if (err) {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
         pending.delete(id);
         reject(err);
       }
     });
 
     // Timeout after 15 seconds
-    setTimeout(() => {
+    timeoutHandle = setTimeout(() => {
       if (pending.has(id)) {
         pending.delete(id);
         reject(new Error(`MCP request timed out (method: ${method})`));

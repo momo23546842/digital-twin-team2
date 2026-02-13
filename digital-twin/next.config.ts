@@ -15,12 +15,8 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         headers: [
           {
-            key: "Access-Control-Allow-Credentials",
-            value: "true",
-          },
-          {
             key: "Access-Control-Allow-Origin",
-            value: "*",
+            value: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
           },
           {
             key: "Access-Control-Allow-Methods",
@@ -28,7 +24,11 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Access-Control-Allow-Headers",
-            value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+            value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization",
+          },
+          {
+            key: "Vary",
+            value: "Origin",
           },
         ],
       },
