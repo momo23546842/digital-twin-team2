@@ -11,14 +11,18 @@ export function setApiRedirectCallback(callback: RedirectCallback) {
 
 class ApiClient {
   private client: AxiosInstance;
+  private onUnauthorizedCallback: (() => void) | null = null;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
+      // Use the proxy API route instead of direct backend URL
+      baseURL: "/api/proxy",
       timeout: API_TIMEOUT,
       headers: {
         "Content-Type": "application/json",
       },
+      // Enable sending cookies with requests
+      withCredentials: true,
     });
 
     // Request interceptor

@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, Crimson_Pro } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { ApiProvider } from "@/components/providers/ApiProvider";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-crimson-pro",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Digital Twin - Your Professional Profile, Always Available",
