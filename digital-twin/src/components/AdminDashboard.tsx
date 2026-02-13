@@ -86,8 +86,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </p>
           )}
         </div>
-        <div className="p-3 bg-emerald-500/20 rounded-lg">
-          <Icon size={24} className="text-emerald-400" />
+        <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400">
+          <Icon size={24} />
         </div>
       </div>
     </div>

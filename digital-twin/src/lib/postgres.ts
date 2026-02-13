@@ -474,9 +474,8 @@ export async function storeIngestionMetadata(
 }
 
 /**
- * Export getPool for use in other modules
+ * getPool is already exported above
  */
-export { getPool };
 
 /**
  * Close database connection
