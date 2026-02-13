@@ -261,6 +261,34 @@ async function initializeAppTables(client: PoolClient) {
   await client.query(`
     CREATE INDEX IF NOT EXISTS analytics_created_idx ON analytics(created_at);
   `);
+
+  // Phone calls table (for VAPI webhook integration)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS phone_calls (
+      id TEXT PRIMARY KEY,
+      call_id TEXT UNIQUE NOT NULL,
+      caller_number TEXT NOT NULL,
+      status TEXT DEFAULT 'in_progress',
+      started_at TIMESTAMP NOT NULL,
+      ended_at TIMESTAMP,
+      duration INTEGER,
+      recording_url TEXT,
+      transcript TEXT,
+      summary TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_call_id_idx ON phone_calls(call_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_status_idx ON phone_calls(status);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_created_idx ON phone_calls(created_at);
+  `);
 }
 
 /**
