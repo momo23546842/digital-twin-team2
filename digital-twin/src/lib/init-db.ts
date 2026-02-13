@@ -19,9 +19,10 @@ async function main() {
     console.log("✓ Database initialized successfully!");
   } catch (error) {
     console.error("✗ Database initialization failed:", error);
-    process.exitCode = 1;
+    process.exit(1);
   } finally {
     await closeDatabase();
+    process.exit(0);
   }
 }
 

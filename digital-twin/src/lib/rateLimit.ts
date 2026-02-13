@@ -17,27 +17,36 @@ export async function checkRateLimit(
     const key = `rate-limit:${userId}`;
     const expiresAt = new Date(Date.now() + windowSeconds * 1000);
 
-    // Atomically insert or update the rate limit entry
-    const upsertResult = await client.query(
+    // Try to update the count if the key exists and hasn't expired
+    const updateResult = await client.query(
       `
-      INSERT INTO rate_limits (key, count, expires_at)
-      VALUES ($1, 1, $2)
-      ON CONFLICT (key) DO UPDATE SET
-        count = CASE
-          WHEN rate_limits.expires_at > NOW() THEN rate_limits.count + 1
-          ELSE 1
-        END,
-        expires_at = CASE
-          WHEN rate_limits.expires_at > NOW() THEN rate_limits.expires_at
-          ELSE EXCLUDED.expires_at
-        END
+      UPDATE rate_limits
+      SET count = count + 1
+      WHERE key = $1 AND expires_at > NOW()
       RETURNING count;
       `,
-      [key, expiresAt]
+      [key]
     );
 
-    const currentCount = upsertResult.rows[0].count;
-    return currentCount <= limit;
+    if (updateResult.rows.length > 0) {
+      // Key exists and hasn't expired
+      const currentCount = updateResult.rows[0].count;
+      return currentCount <= limit;
+    }
+
+    // Key doesn't exist or has expired, create a new one
+    await client.query(
+      `
+      INSERT INTO rate_limits (key, count, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (key) DO UPDATE SET
+        count = EXCLUDED.count,
+        expires_at = EXCLUDED.expires_at;
+      `,
+      [key, 1, expiresAt]
+    );
+
+    return true; // First request in the window is always allowed
   } catch (error) {
     console.error("Rate limit check error:", error);
     // Fail open on error - allow the request
