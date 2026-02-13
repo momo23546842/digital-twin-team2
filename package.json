@@ -1,4 +1,15 @@
 {
+  "name": "digital-twin-root",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "cd digital-twin && npm install && npm run dev",
+    "build": "cd digital-twin && npm install && npm run build",
+    "start": "cd digital-twin && npm run start"
+  },
+  "dependencies": {
+    "next": "^15.5.12"
+  },
   "devDependencies": {
     "@types/pg": "^8.16.0"
   }

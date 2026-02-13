@@ -1,19 +1,31 @@
-import { Pool, PoolClient } from "pg";
+import { Pool } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
+let initialized = false;
 
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!pool) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not defined");
     }
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      max: 20, // Maximum number of connections
+      max: 20,
     });
   }
   return pool;
+}
+
+export async function ensureInitialized() {
+  if (initialized) return;
+  try {
+    await initializeDatabase();
+    initialized = true;
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    throw error;
+  }
 }
 
 /**
@@ -22,7 +34,7 @@ function getPool(): Pool {
 export async function initializeDatabase() {
   const client = await getPool().connect();
   try {
-    // Try to enable pgvector extension (optional for now)
+    // Enable pgvector extension
     try {
       await client.query("CREATE EXTENSION IF NOT EXISTS vector;");
       console.log("pgvector extension enabled");
@@ -30,7 +42,7 @@ export async function initializeDatabase() {
       console.warn("pgvector extension not available, using JSONB for embeddings");
     }
 
-    // Create vectors table (works with or without pgvector)
+    // ── Vectors ──────────────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS vectors (
         id TEXT PRIMARY KEY,
@@ -42,13 +54,12 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create GIN index for JSONB queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS vectors_embedding_idx 
       ON vectors USING gin (embedding jsonb_path_ops);
     `);
 
-    // Create ingestion metadata table
+    // ── Ingestion metadata ────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS ingestion_metadata (
         id TEXT PRIMARY KEY,
@@ -61,13 +72,12 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create index for ingestion metadata queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS ingestion_metadata_user_idx 
       ON ingestion_metadata(user_id);
     `);
 
-    // Create database cache table
+    // ── Cache ─────────────────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS database_cache (
         key TEXT PRIMARY KEY,
@@ -78,7 +88,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create rate limiting table
+    // ── Rate limits ───────────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS rate_limits (
         key TEXT PRIMARY KEY,
@@ -88,10 +98,112 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create index for rate limit cleanup
     await client.query(`
       CREATE INDEX IF NOT EXISTS rate_limits_expires_idx 
       ON rate_limits(expires_at);
+    `);
+
+    // ── Conversations ─────────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id VARCHAR(255) PRIMARY KEY,
+        session_id VARCHAR(255),
+        user_id VARCHAR(255),
+        title VARCHAR(500),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS conversations_user_idx 
+      ON conversations(user_id);
+    `);
+
+    // ── Messages ──────────────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id VARCHAR(255) PRIMARY KEY,
+        conversation_id VARCHAR(255) REFERENCES conversations(id) ON DELETE CASCADE,
+        role VARCHAR(50) NOT NULL,
+        content TEXT NOT NULL,
+        voice_url TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS messages_conversation_idx 
+      ON messages(conversation_id);
+    `);
+
+    // ── Contacts ──────────────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id VARCHAR(255) PRIMARY KEY,
+        email VARCHAR(255),
+        name VARCHAR(255),
+        phone VARCHAR(50),
+        company VARCHAR(255),
+        title VARCHAR(255),
+        message TEXT,
+        source VARCHAR(100) DEFAULT 'chat',
+        conversation_id VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS contacts_email_idx 
+      ON contacts(email);
+    `);
+
+    // ── Meetings ──────────────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS meetings (
+        id VARCHAR(255) PRIMARY KEY,
+        contact_id VARCHAR(255),
+        scheduled_at TIMESTAMP,
+        duration_minutes INTEGER DEFAULT 30,
+        notes TEXT,
+        status VARCHAR(50) DEFAULT 'scheduled',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS meetings_contact_idx 
+      ON meetings(contact_id);
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS meetings_scheduled_idx 
+      ON meetings(scheduled_at);
+    `);
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS analytics (
+        id VARCHAR(255) PRIMARY KEY,
+        event_type VARCHAR(255),
+        conversation_id VARCHAR(255),
+        user_id VARCHAR(255),
+        event_data JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS analytics_event_type_idx 
+      ON analytics(event_type);
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS analytics_user_idx 
+      ON analytics(user_id);
     `);
 
     console.log("Database initialized successfully");
@@ -115,9 +227,10 @@ export async function upsertVectors(
 ) {
   if (vectors.length === 0) return;
 
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
-    // Build the VALUES clause for bulk insert
     const values: any[] = [];
     const placeholders: string[] = [];
 
@@ -127,8 +240,10 @@ export async function upsertVectors(
         `($${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4})`
       );
       values.push(vec.id);
-      values.push(JSON.stringify(vec.vector)); // Store as JSONB
-      values.push(vec.metadata?.content || ""); // Store content separately
+      values.push(JSON.stringify(vec.vector));
+      const content = vec.metadata?.content;
+      const contentStr = typeof content === "string" ? content : "";
+      values.push(contentStr);
       values.push(JSON.stringify(vec.metadata || {}));
     });
 
@@ -137,6 +252,7 @@ export async function upsertVectors(
       VALUES ${placeholders.join(",")}
       ON CONFLICT (id) DO UPDATE SET
         embedding = EXCLUDED.embedding,
+        content = EXCLUDED.content,
         metadata = EXCLUDED.metadata,
         updated_at = CURRENT_TIMESTAMP;
     `;
@@ -152,17 +268,17 @@ export async function upsertVectors(
 
 /**
  * Query similar vectors using cosine similarity
- * Works with JSONB arrays (fallback when pgvector is not available)
  */
 export async function querySimilarVectors(
   queryVector: number[],
   topK: number = 5
 ) {
+  await ensureInitialized();
+
   const client = await getPool().connect();
   try {
     const queryEmbed = JSON.stringify(queryVector);
 
-    // Calculate cosine similarity in SQL for JSONB arrays
     const result = await client.query(
       `
       WITH vector_similarity AS (
@@ -175,9 +291,12 @@ export async function querySimilarVectors(
             SELECT SUM((v1.value::numeric) * (v2.value::numeric))
             FROM jsonb_array_elements_text(embedding) WITH ORDINALITY v1(value, ord)
             JOIN jsonb_array_elements_text($1::jsonb) WITH ORDINALITY v2(value, ord) ON v1.ord = v2.ord
-          ) / (
-            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
-            SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
+          ) / NULLIF(
+            (
+              SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text(embedding) value)) *
+              SQRT((SELECT SUM(POWER(value::numeric, 2)) FROM jsonb_array_elements_text($1::jsonb) value))
+            ),
+            0
           ) AS similarity
         FROM vectors
       )
@@ -190,12 +309,26 @@ export async function querySimilarVectors(
       [queryEmbed, topK]
     );
 
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      score: row.similarity || 0,
-      text_chunk: row.content,
-      metadata: row.metadata || {},
-    }));
+    return result.rows.map((row: any) => {
+      const rawSimilarity = row.similarity;
+      let similarityScore: number;
+
+      if (rawSimilarity === null || rawSimilarity === undefined) {
+        similarityScore = 0;
+      } else if (typeof rawSimilarity === "number") {
+        similarityScore = rawSimilarity;
+      } else {
+        const parsed = parseFloat(rawSimilarity);
+        similarityScore = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
+      return {
+        id: row.id,
+        score: similarityScore,
+        text_chunk: row.content,
+        metadata: row.metadata || {},
+      };
+    });
   } catch (error) {
     console.error("Vector query error:", error);
     throw error;
@@ -254,9 +387,41 @@ export async function deleteVectors(ids: string[]) {
 }
 
 /**
- * Export getPool for use in other modules
+ * Store ingestion metadata
  */
-export { getPool };
+export async function storeIngestionMetadata(
+  id: string,
+  userId: string,
+  documentCount: number,
+  documents: Array<{ id: string; title?: string }>,
+  ttlSeconds?: number
+) {
+  const client = await getPool().connect();
+  try {
+    const expiresAt = ttlSeconds
+      ? new Date(Date.now() + ttlSeconds * 1000)
+      : null;
+
+    await client.query(
+      `
+      INSERT INTO ingestion_metadata (id, user_id, document_count, documents, expires_at)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (id) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        document_count = EXCLUDED.document_count,
+        documents = EXCLUDED.documents,
+        expires_at = EXCLUDED.expires_at,
+        timestamp = CURRENT_TIMESTAMP;
+      `,
+      [id, userId, documentCount, JSON.stringify(documents), expiresAt]
+    );
+  } catch (error) {
+    console.error("Ingestion metadata storage error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 /**
  * Close database connection
