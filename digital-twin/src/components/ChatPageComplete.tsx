@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar, Settings, LogOut, History } from 'lucide-react';
 import MessageList from '@/components/MessageListEnhanced';
 import ChatInputEnhanced from '@/components/ChatInputEnhanced';
 import ContactForm from '@/components/ContactForm';
+import CallScreen from '@/components/CallScreen';
 import type { Message, Conversation } from '@/types';
 
 interface ChatPageProps {
@@ -27,6 +28,9 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
   const [showContactForm, setShowContactForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState<Conversation[]>([]);
+  
+  // Call screen state
+  const [isCallOpen, setIsCallOpen] = useState(false);
 
   // Initialize session
   useEffect(() => {
@@ -75,6 +79,15 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     };
 
     fetchHistory();
+  }, []);
+
+  // Call handlers
+  const handleStartCall = useCallback(() => {
+    setIsCallOpen(true);
+  }, []);
+
+  const handleEndCall = useCallback(() => {
+    setIsCallOpen(false);
   }, []);
 
   const handleSendMessage = async (content: string) => {
@@ -236,12 +249,15 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
         {/* Chat Content */}
         <div className="flex-1 flex gap-6 overflow-hidden p-6">
           {/* Messages */}
-          <div className="flex-1 flex flex-col bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+          <div className="flex-1 flex flex-col bg-slate-800 border border-slate-700 rounded-lg overflow-hidden relative">
             <MessageList messages={messages} isLoading={isLoading} />
+            
             <ChatInputEnhanced
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               disabled={!conversationId}
+              onStartCall={handleStartCall}
+              isInCall={isCallOpen}
             />
           </div>
 
@@ -277,6 +293,14 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Call Screen Overlay */}
+      <CallScreen
+        isOpen={isCallOpen}
+        contactName="Digital Twin"
+        onEndCall={handleEndCall}
+        onClose={handleEndCall}
+      />
     </div>
   );
 }
