@@ -70,7 +70,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     value,
     trend,
   }: {
-    icon: React.ComponentType<{ size: number }>;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
     value: number;
     trend?: number;
