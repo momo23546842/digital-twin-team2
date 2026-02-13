@@ -30,12 +30,23 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
- * Get JWT secret, required in all environments
+ * Get JWT secret, required at runtime
+ * During build time (when NODE_ENV is not 'production' or 'development'),
+ * we allow it to be missing since no actual auth operations happen during build
  */
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   
+  // Allow missing JWT_SECRET during build/prerender phase
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                      process.env.NEXT_PHASE === 'phase-export';
+  
   if (!secret) {
+    if (isBuildTime) {
+      // Return a placeholder during build - actual secret needed at runtime
+      console.warn('JWT_SECRET not set during build - this is OK for static generation');
+      return 'build-time-placeholder-not-used-for-actual-auth';
+    }
     throw new Error(
       'JWT_SECRET environment variable is required. ' +
       'Set it in your .env.local file or environment variables.'

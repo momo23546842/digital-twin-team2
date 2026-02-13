@@ -12,9 +12,10 @@ const nextConfig: NextConfig = {
   headers: async () => {
     const allowedOrigin = process.env.ALLOWED_ORIGIN;
     
-    // In production, require explicit ALLOWED_ORIGIN
+    // In production, log warning if ALLOWED_ORIGIN not explicitly set
     if (process.env.NODE_ENV === 'production' && !allowedOrigin) {
-      console.error('ALLOWED_ORIGIN must be set in production for CORS');
+      console.warn('⚠️  ALLOWED_ORIGIN environment variable not set. CORS will default to localhost.');
+      console.warn('   Set ALLOWED_ORIGIN in Vercel environment variables for production use.');
     }
     
     return [
