@@ -3,19 +3,19 @@
     {
       "id": "user_example_1",
       "email": "user1@example.invalid",
-      "password": "$2b$10$examplehashforuser1xxxxxxxxxxxxxx0000000000000000000000",
+      "password": "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
       "name": "Example User 1"
     },
     {
       "id": "user_example_2",
       "email": "user2@example.invalid",
-      "password": "$2b$10$examplehashforuser2xxxxxxxxxxxxxx0000000000000000000000",
+      "password": "$2b$10$V9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz",
       "name": "Example User 2"
     },
     {
       "id": "user_example_3",
       "email": "user3@example.invalid",
-      "password": "$2b$10$examplehashforuser3xxxxxxxxxxxxxx0000000000000000000000",
+      "password": "$2b$10$W9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa",
       "name": "Example User 3"
     }
   ]

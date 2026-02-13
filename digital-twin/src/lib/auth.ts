@@ -30,17 +30,20 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
- * Get JWT secret, fail fast if not set in production
+ * Get JWT secret, required in all environments
  */
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET must be set in production');
-    }
-    console.warn('WARNING: Using default JWT secret in development. Set JWT_SECRET env var.');
-    return 'dev-secret-key-CHANGE-IN-PRODUCTION';
+    throw new Error(
+      'JWT_SECRET environment variable is required. ' +
+      'Set it in your .env.local file or environment variables.'
+    );
+  }
+  
+  if (secret.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters long for security');
   }
   
   return secret;
@@ -88,11 +91,15 @@ export function verifyToken(token: string): { userId: string } | null {
       .digest('base64url');
 
     // Use timing-safe comparison
-    const signatureBuffer = Buffer.from(signature, 'base64url');
-    const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
-    
-    if (signatureBuffer.length !== expectedBuffer.length || 
-        !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    try {
+      const signatureBuffer = Buffer.from(signature, 'base64url');
+      const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
+      
+      if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+        return null;
+      }
+    } catch {
+      // Buffers have different lengths or other error
       return null;
     }
 
