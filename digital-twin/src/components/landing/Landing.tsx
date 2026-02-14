@@ -43,9 +43,9 @@ export default function LandingPage() {
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 backdrop-blur">
             <div className="bg-slate-900 rounded-lg p-6 space-y-4">
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <MessageCircle size={16} className="text-emerald-400" />
-                </div>
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <MessageCircle size={16} />
+                  </div>
                 <div className="flex-1 bg-slate-800 rounded p-3 text-left text-slate-300">
                   Hi! What can you tell me about your experience?
                 </div>
@@ -68,32 +68,32 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: <MessageCircle className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><MessageCircle size={32} /></div>,
                 title: 'Natural Chat',
                 description: 'Chat naturally with an AI trained on my background and expertise',
               },
               {
-                icon: <Mic className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><Mic size={32} /></div>,
                 title: 'Voice Support',
                 description: 'Talk to me using voice - perfect for quick conversations',
               },
               {
-                icon: <FileText className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><FileText size={32} /></div>,
                 title: 'Rich Context',
                 description: 'Ask about my projects, skills, and experience in detail',
               },
               {
-                icon: <Calendar className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><Calendar size={32} /></div>,
                 title: 'Schedule Meetings',
                 description: 'Book time directly for interviews or collaborations',
               },
               {
-                icon: <Shield className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><Shield size={32} /></div>,
                 title: 'Secure & Private',
                 description: 'Your conversations are secure and never shared',
               },
               {
-                icon: <ArrowRight className="w-8 h-8" />,
+                icon: <div className="w-8 h-8"><ArrowRight size={32} /></div>,
                 title: 'Always Available',
                 description: '24/7 availability to answer your questions',
               },

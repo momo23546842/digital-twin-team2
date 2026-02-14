@@ -125,7 +125,9 @@ export default function DocumentUpload({
                        hover:bg-slate-600 hover:text-white hover:border-slate-500
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Upload className="w-4 h-4" />
+            <div className="w-4 h-4">
+              <Upload size={16} />
+            </div>
             Select Files
           </button>
 
@@ -140,9 +142,9 @@ export default function DocumentUpload({
               }`}
           >
             {uploading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" />Uploading...</>
+              <><div className="w-4 h-4 animate-spin"><Loader2 size={16} /></div>Uploading...</>
             ) : (
-              <><Upload className="w-4 h-4" />Upload {files.length > 0 && `(${files.length})`}</>
+              <><div className="w-4 h-4"><Upload size={16} /></div>Upload {files.length > 0 && `(${files.length})`}</>
             )}
           </button>
 
@@ -152,9 +154,9 @@ export default function DocumentUpload({
               ${statusType === "error" ? "bg-red-900/40 text-red-400 border border-red-700"
                 : statusType === "success" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-700"
                 : "bg-slate-700 text-slate-300 border border-slate-600"}`}>
-              {statusType === "error" ? <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                : statusType === "success" ? <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                : <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
+              {statusType === "error" ? <div className="w-3.5 h-3.5 shrink-0"><AlertCircle size={14} /></div>
+                : statusType === "success" ? <div className="w-3.5 h-3.5 shrink-0"><CheckCircle size={14} /></div>
+                : <div className="w-3.5 h-3.5 shrink-0 animate-spin"><Loader2 size={14} /></div>}
               <span className="truncate max-w-xs">{status}</span>
             </div>
           )}
@@ -171,10 +173,10 @@ export default function DocumentUpload({
             {files.map((file, index) => (
               <div key={index}
                 className="flex items-center gap-2 bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-                <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="w-3.5 h-3.5 text-emerald-400 shrink-0"><FileText size={14} /></div>
                 <span className="truncate max-w-[160px]">{file.name}</span>
                 <button onClick={() => removeFile(index)} className="text-slate-500 hover:text-red-400 transition-colors ml-1">
-                  <X className="w-3.5 h-3.5" />
+                  <div className="w-3.5 h-3.5"><X size={14} /></div>
                 </button>
               </div>
             ))}

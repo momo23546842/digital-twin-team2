@@ -102,7 +102,9 @@ export default function CallScreen({
               className="p-2 text-white/70 hover:text-white transition-colors"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <div className="w-6 h-6">
+                <X size={24} />
+              </div>
             </button>
           )}
           <div className="flex-1 text-center">
@@ -140,7 +142,9 @@ export default function CallScreen({
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <User className="w-16 h-16 text-white/90" />
+                <div className="w-16 h-16 text-white/90">
+                  <User size={64} />
+                </div>
               )}
             </div>
           </div>
@@ -189,7 +193,15 @@ export default function CallScreen({
                   ? 'bg-white text-slate-900' 
                   : 'bg-white/20 text-white hover:bg-white/30'
               }`}>
-                {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
+                {isMuted ? (
+                  <div className="w-7 h-7">
+                    <MicOff size={28} />
+                  </div>
+                ) : (
+                  <div className="w-7 h-7">
+                    <Mic size={28} />
+                  </div>
+                )}
               </div>
               <span className="text-xs text-white/70 font-medium">
                 {isMuted ? 'Unmute' : 'Mute'}
@@ -208,7 +220,15 @@ export default function CallScreen({
                   ? 'bg-white text-slate-900' 
                   : 'bg-white/20 text-white hover:bg-white/30'
               }`}>
-                {isSpeakerOn ? <Volume2 className="w-7 h-7" /> : <VolumeX className="w-7 h-7" />}
+                {isSpeakerOn ? (
+                  <div className="w-7 h-7">
+                    <Volume2 size={28} />
+                  </div>
+                ) : (
+                  <div className="w-7 h-7">
+                    <VolumeX size={28} />
+                  </div>
+                )}
               </div>
               <span className="text-xs text-white/70 font-medium">
                 {isSpeakerOn ? 'Speaker' : 'Speaker'}
@@ -223,7 +243,9 @@ export default function CallScreen({
               className="group flex flex-col items-center gap-2"
             >
               <div className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-500/40">
-                <PhoneOff className="w-9 h-9 text-white transform rotate-135" />
+                <div className="w-9 h-9 text-white transform rotate-135">
+                  <PhoneOff size={36} />
+                </div>
               </div>
               <span className="text-xs text-white/70 font-medium group-hover:text-white transition-colors">
                 End Call

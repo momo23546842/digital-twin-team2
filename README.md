@@ -8,6 +8,15 @@
 
 > **⚡ START HERE: Get running in 5 minutes with [QUICKSTART.md](./digital-twin/QUICKSTART.md)**
 
+## 🔐 SECURITY WARNING - READ FIRST
+
+**⚠️ CRITICAL**: A `.env.local` file with sensitive credentials was previously committed to this repository. **See [SECURITY.md](./SECURITY.md) for immediate action required.**
+
+**If you cloned this repo before February 14, 2026:**
+- DO NOT use the exposed credentials
+- Generate NEW API keys and database credentials
+- Follow the security checklist in [SECURITY.md](./SECURITY.md)
+
 ## 🎯 Overview
 
 A production-ready AI-powered web application that enables users to have intelligent conversations with a personalized digital twin. Acts as an active digital representative combining:
@@ -38,12 +47,14 @@ A production-ready AI-powered web application that enables users to have intelli
 
 ```bash
 cd digital-twin
-npm install && npm run dev
+npm install
+cp ../.env.example .env.local  # Copy template and add YOUR credentials
+npm run dev
 ```
 
 Then:
 1. Open http://localhost:3000
-2. Add `.env.local` with Groq API key + Database URL (see [QUICKSTART.md](./digital-twin/QUICKSTART.md))
+2. Edit `.env.local` with your Groq API key + Database URL (see [QUICKSTART.md](./digital-twin/QUICKSTART.md))
 3. Start chatting! 🎉
 
 > 📖 **Full setup guide** → [QUICKSTART.md](./digital-twin/QUICKSTART.md)
@@ -82,12 +93,23 @@ bash startup.sh
 
 ### 2. Create `.env.local`
 
+```bash
+# Copy the example file
+cp .env.example .env.local
+
+# Edit .env.local with your credentials
+```
+
+Required environment variables:
+
 ```env
 GROQ_API_KEY=gsk_your_key_here
 DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 JWT_SECRET=your-secret-key-change-in-production
 ```
+
+> ⚠️ **NEVER commit `.env.local` to git!** It's already in `.gitignore`.
 
 ## 🚀 Running
 
@@ -239,6 +261,7 @@ See [SETUP.md](./digital-twin/SETUP.md) for more troubleshooting.
 
 | Document | Purpose |
 |----------|---------|
+| [SECURITY.md](./SECURITY.md) | Security notices and best practices |
 | [QUICKSTART.md](./digital-twin/QUICKSTART.md) | 5-minute setup (START HERE!) |
 | [SETUP.md](./digital-twin/SETUP.md) | Comprehensive setup guide |
 | [PRODUCTION_README.md](./digital-twin/PRODUCTION_README.md) | Complete feature documentation |
@@ -275,6 +298,8 @@ curl -X PATCH http://localhost:3000/api/admin-auth \
 - ✅ Connection pooling
 - ✅ Admin token validation
 
+**See [SECURITY.md](./SECURITY.md) for security best practices and incident response.**
+
 ## 📈 Roadmap
 
 - ✅ Core chat interface
@@ -288,10 +313,10 @@ curl -X PATCH http://localhost:3000/api/admin-auth \
 
 ## 🤝 Contributing
 
-1. Create feature branch
-2. Make changes
-3. Test locally
-4. Submit PR
+1. Create feature branch: `git checkout -b feature/your-feature`
+2. Commit changes: `git commit -m "Add your feature"`
+3. Push to branch: `git push origin feature/your-feature`
+4. Open a Pull Request
 
 ## 📄 License
 
@@ -301,23 +326,11 @@ MIT License
 
 1. **Get running**: `npm install && npm run dev`
 2. **Grab API keys**: Groq (free) and Neon (free)
-3. **Configure**: Create `.env.local`
+3. **Configure**: Create `.env.local` from `.env.example`
 4. **Customize**: Edit landing page and AI personality
 5. **Deploy**: Follow [DEPLOYMENT_CHECKLIST.md](./digital-twin/DEPLOYMENT_CHECKLIST.md)
 
 ---
-
-**Questions?** Read [QUICKSTART.md](./digital-twin/QUICKSTART.md) for detailed guide!
-
-Made with ❤️ for Digital Twin Team 2
-* Ensure you are using `https://` or `localhost`.
-
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Commit changes: `git commit -m "Add your feature"`
-3. Push to branch: `git push origin feature/your-feature`
-4. Open a Pull Request
 
 ## ✅ Acceptance Criteria (From PRD)
 
@@ -330,4 +343,6 @@ Made with ❤️ for Digital Twin Team 2
 
 **Team 2** | Digital Twin Project | 2026
 
+**Questions?** Read [QUICKSTART.md](./digital-twin/QUICKSTART.md) for detailed guide!
 
+Made with ❤️ for Digital Twin Team 2

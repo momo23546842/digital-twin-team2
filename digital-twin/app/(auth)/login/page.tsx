@@ -79,7 +79,9 @@ export default function LoginPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <Mail size={20} />
+                </div>
                 <input
                   type="email"
                   required
@@ -102,7 +104,9 @@ export default function LoginPage() {
                 </span>
               </div>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <Lock size={20} />
+                </div>
                 <input
                   type="password"
                   required
@@ -128,7 +132,9 @@ export default function LoginPage() {
               ) : (
                 <>
                   Sign In
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="w-4 h-4 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight size={16} />
+                  </div>
                 </>
               )}
             </button>

@@ -39,7 +39,9 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`${stat.color} w-12 h-12 rounded-xl flex items-center justify-center`}>
-                    <Icon className="w-6 h-6 text-white" />
+                    <div className="w-6 h-6 text-white">
+                      <Icon size={24} />
+                    </div>
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm font-medium mb-1">{stat.label}</p>
@@ -57,19 +59,25 @@ export default function DashboardPage() {
               href="/chat"
               className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition-colors group"
             >
-              <MessageCircle className="w-5 h-5 text-green-600" />
+              <div className="w-5 h-5 text-green-600">
+                <MessageCircle size={20} />
+              </div>
               <span className="text-green-700 font-semibold group-hover:text-green-800">
                 Start New Chat
               </span>
             </Link>
             <button className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors group">
-              <User className="w-5 h-5 text-gray-600" />
+              <div className="w-5 h-5 text-gray-600">
+                <User size={20} />
+              </div>
               <span className="text-gray-700 font-semibold group-hover:text-gray-800">
                 Update Profile
               </span>
             </button>
             <button className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors group">
-              <TrendingUp className="w-5 h-5 text-gray-600" />
+              <div className="w-5 h-5 text-gray-600">
+                <TrendingUp size={20} />
+              </div>
               <span className="text-gray-700 font-semibold group-hover:text-gray-800">
                 View Analytics
               </span>
