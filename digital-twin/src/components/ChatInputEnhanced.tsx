@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Send, Mic, MicOff, Loader, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Send, Mic, MicOff, Loader, Eye, EyeOff, AlertCircle, Phone } from 'lucide-react';
 import type { Message, Conversation } from '@/types';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  onStartCall?: () => void;
+  isInCall?: boolean;
 }
 
-export default function ChatInput({ onSendMessage, isLoading, disabled }: ChatInputProps) {
+export default function ChatInput({ onSendMessage, isLoading, disabled, onStartCall, isInCall }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -20,7 +22,7 @@ export default function ChatInput({ onSendMessage, isLoading, disabled }: ChatIn
 
   // Setup speech recognition
   useEffect(() => {
-    const SpeechRecognition = window.webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
@@ -142,6 +144,20 @@ export default function ChatInput({ onSendMessage, isLoading, disabled }: ChatIn
         </div>
 
         <div className="flex gap-2">
+          {/* Call Button */}
+          <button
+            onClick={onStartCall}
+            disabled={isLoading || disabled || isInCall}
+            className={`p-3 rounded-full font-medium transition-all flex items-center justify-center ${
+              isInCall
+                ? 'bg-emerald-500/30 border border-emerald-400 text-emerald-400 cursor-not-allowed'
+                : 'bg-emerald-500 hover:bg-emerald-600 text-white hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/30'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={isInCall ? 'In Call' : 'Start Call'}
+          >
+            <Phone size={20} />
+          </button>
+
           {/* Voice Button */}
           <button
             onClick={isRecording ? handleStopVoice : handleStartVoice}
