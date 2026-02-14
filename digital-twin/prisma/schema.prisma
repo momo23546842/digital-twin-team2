@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Conversation History - stores messages for agent memory
+model ChatLog {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  role      String   // 'user' | 'assistant'
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("chat_logs")
+}
+
+// Lead/Contact Info - stores captured opportunities
+model Lead {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  company   String?
+  source    String   @default("chat")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("leads")
+}
+
+// Phone Call Records - stores Vapi/voice call data
+model PhoneCall {
+  id           String    @id @default(cuid())
+  callId       String    @unique @map("call_id")
+  callerNumber String    @map("caller_number")
+  status       String    @default("pending") // pending, in-progress, completed, failed
+  startedAt    DateTime? @map("started_at")
+  endedAt      DateTime? @map("ended_at")
+  duration     Int?      // duration in seconds
+  recordingUrl String?   @map("recording_url")
+  transcript   String?   @db.Text
+  summary      String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([callId])
+  @@index([callerNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("phone_calls")
+}
+
+// Voice Configuration - stores ElevenLabs voice settings
+model VoiceConfig {
+  id              String   @id @default(cuid())
+  voiceId         String   @map("voice_id")
+  name            String
+  stability       Float    @default(0.5)
+  similarityBoost Float    @default(0.75) @map("similarity_boost")
+  modelId         String   @default("eleven_monolingual_v1") @map("model_id")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("voice_configs")
+}

@@ -80,7 +80,7 @@ export default function ChatPane() {
   };
 
   return (
-    <div className="flex flex-col h-screen relative overflow-hidden bg-white">
+    <div className="flex flex-col min-h-screen relative overflow-hidden bg-white">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl" />

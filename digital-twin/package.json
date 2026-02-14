@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/client": "6.19.2",
+    "@vapi-ai/server-sdk": "^0.11.0",
     "class-variance-authority": "^0.7.1",
     "groq-sdk": "^0.37.0",
     "lucide-react": "^0.562.0",
@@ -28,6 +30,7 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "prisma": "^6.19.2",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
