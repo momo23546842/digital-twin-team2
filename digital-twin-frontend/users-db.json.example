@@ -1,0 +1,17 @@
+{
+  "users": [
+    {
+      "id": "user_example_1",
+      "email": "user1@example.invalid",
+      "password": "$2b$10$N9qo8uLOickgx2ZMRZoMy.IjZAgcfl7p92ldGxad68LJZdL17lhWy",
+      "name": "Example User 1",
+      "comment": "Example file showing bcrypt hash format. Password hashes must be exactly 60 characters."
+    },
+    {
+      "id": "user_example_2",
+      "email": "user2@example.invalid",
+      "password": "$2b$10$V9qo8uLOickgx2ZMRZoMy.IjZAgcfl7p92ldGxad68LJZdL17lhXz",
+      "name": "Example User 2"
+    }
+  ]
+}

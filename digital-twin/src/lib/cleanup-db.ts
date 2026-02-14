@@ -5,7 +5,7 @@
  * Run periodically (e.g., via cron job or scheduled task)
  * 
  * Usage:
- *   npx ts-node --skip-project src/lib/cleanup-db.ts
+ *   npx tsx src/lib/cleanup-db.ts
  */
 
 import { cleanupExpiredEntries, closeDatabase } from "./postgres";

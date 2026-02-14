@@ -105,7 +105,7 @@ export default function MessageList({
                   `}
                   suppressHydrationWarning
                 >
-                  {mounted ? formatTime(msg.timestamp) : ""}
+                  {mounted && msg.timestamp ? formatTime(msg.timestamp) : ""}
                 </span>
               </div>
             </div>

@@ -1,5 +1,3 @@
-import { groq } from "./groq";
-
 /**
  * Generate embeddings for text using Groq's embedding model
  * Falls back to a simple hash-based embedding if API fails

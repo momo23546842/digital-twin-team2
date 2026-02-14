@@ -30,6 +30,37 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
+ * Get JWT secret, required at runtime
+ * During build time (when NODE_ENV is not 'production' or 'development'),
+ * we allow it to be missing since no actual auth operations happen during build
+ */
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  
+  // Allow missing JWT_SECRET during build/prerender phase
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                      process.env.NEXT_PHASE === 'phase-export';
+  
+  if (!secret) {
+    if (isBuildTime) {
+      // Return a placeholder during build - actual secret needed at runtime
+      console.warn('JWT_SECRET not set during build - this is OK for static generation');
+      return 'build-time-placeholder-not-used-for-actual-auth';
+    }
+    throw new Error(
+      'JWT_SECRET environment variable is required. ' +
+      'Set it in your .env.local file or environment variables.'
+    );
+  }
+  
+  if (secret.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters long for security');
+  }
+  
+  return secret;
+}
+
+/**
  * Generate a secure authentication token (JWT-like)
  */
 export function generateToken(
@@ -47,7 +78,7 @@ export function generateToken(
   );
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = crypto
-    .createHmac('sha256', process.env.JWT_SECRET || 'dev-secret-key')
+    .createHmac('sha256', getJwtSecret())
     .update(`${header}.${body}`)
     .digest('base64url');
 
@@ -66,11 +97,20 @@ export function verifyToken(token: string): { userId: string } | null {
 
     // Reconstruct and verify signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.JWT_SECRET || 'dev-secret-key')
+      .createHmac('sha256', getJwtSecret())
       .update(`${header}.${body}`)
       .digest('base64url');
 
-    if (signature !== expectedSignature) {
+    // Use timing-safe comparison
+    try {
+      const signatureBuffer = Buffer.from(signature, 'base64url');
+      const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
+      
+      if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+        return null;
+      }
+    } catch {
+      // Buffers have different lengths or other error
       return null;
     }
 
