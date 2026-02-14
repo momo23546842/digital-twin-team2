@@ -67,7 +67,9 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">Full Name</label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <User size={20} />
+                </div>
                 <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe"
                   className="w-full pl-12 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
               </div>
@@ -76,7 +78,9 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <Mail size={20} />
+                </div>
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
                   className="w-full pl-12 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
               </div>
@@ -85,7 +89,9 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <Lock size={20} />
+                </div>
                 <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
                   className="w-full pl-12 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
               </div>
@@ -95,7 +101,9 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">Confirm Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500">
+                  <Lock size={20} />
+                </div>
                 <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••"
                   className={`w-full pl-12 pr-4 py-3 bg-slate-900/50 border rounded-xl text-white placeholder-slate-500 focus:ring-2 outline-none transition-all ${
                     confirmPassword && password !== confirmPassword
@@ -113,7 +121,7 @@ export default function SignupPage() {
               {isLoading ? (
                 <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating account...</>
               ) : (
-                <>Create Free Account <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
+                <>Create Free Account <div className="w-4 h-4 group-hover:translate-x-1 transition-transform"><ArrowRight size={16} /></div></>
               )}
             </button>
 

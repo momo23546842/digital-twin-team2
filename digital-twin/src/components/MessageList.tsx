@@ -44,8 +44,10 @@ export default function MessageList({
       <div className="space-y-5">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mb-6 shadow-lg">
-              <Bot className="w-10 h-10 text-violet-500" />
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mb-6 shadow-lg">
+              <div className="w-10 h-10 text-violet-500">
+                <Bot size={40} />
+              </div>
             </div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">Start a Conversation</h3>
             <p className="text-gray-500 max-w-md">
@@ -73,9 +75,9 @@ export default function MessageList({
                   `}
                 >
                   {msg.role === "user" ? (
-                    <User className="w-5 h-5 text-white" />
+                    <div className="w-5 h-5 text-white"><User size={20} /></div>
                   ) : (
-                    <Bot className="w-5 h-5 text-white" />
+                    <div className="w-5 h-5 text-white"><Bot size={20} /></div>
                   )}
                 </div>
               </div>
@@ -116,8 +118,8 @@ export default function MessageList({
         {isLoading && (
           <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex-shrink-0 mr-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
-                <Bot className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
+                <div className="w-5 h-5 text-white"><Bot size={20} /></div>
               </div>
             </div>
             <div className="bg-gray-100 px-5 py-4 rounded-full">
