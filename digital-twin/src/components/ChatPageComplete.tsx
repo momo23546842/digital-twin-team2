@@ -111,6 +111,7 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
 
   // Call handlers (opens phone call modal)
   const handleStartCall = useCallback(() => {
+    console.log('📞 Phone button clicked');
     setShowPhoneModal(true);
   }, []);
 
