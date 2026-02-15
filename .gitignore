@@ -54,3 +54,5 @@ Thumbs.db
 logs
 *.log
 server.log
+
+/generated/prisma
