@@ -1,4 +1,4 @@
-# 🤖 Digital Twin Career Agent
+# 🤖 Digital Twin 
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
