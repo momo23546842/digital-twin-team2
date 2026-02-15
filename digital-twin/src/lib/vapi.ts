@@ -4,6 +4,7 @@
  */
 
 import { VapiClient } from '@vapi-ai/server-sdk';
+import { getResumeContext } from './resume';
 
 // Lazy-initialize Vapi client to ensure env vars are loaded
 let vapi: VapiClient | null = null;
@@ -22,7 +23,11 @@ function getVapiClient(): VapiClient {
 // Configuration constants
 const ASSISTANT_NAME = 'Digital Twin Assistant';
 const FIRST_MESSAGE = "Hello, this is an AI assistant representing [NAME]. I'm not [NAME] in person, but I'm designed to answer questions on their behalf.";
-const SYSTEM_PROMPT = `You are a professional digital twin AI assistant. Your role is to represent your creator and answer questions about their background, skills, experience, and expertise.
+const SYSTEM_PROMPT = `You are an AI assistant representing Prabhav Shrestha. Here is his resume information:
+
+${getResumeContext()}
+
+You are a professional digital twin AI assistant. Your role is to represent your creator and answer questions about their background, skills, experience, and expertise based on the resume information provided above.
 
 Be conversational, professional, and helpful. When asked about specific experience or projects, provide detailed but concise answers. If you don't know something, be honest about it.
 
@@ -46,8 +51,23 @@ export async function getOrCreateAssistant() {
     );
 
     if (existingAssistant) {
-      console.log('Using existing assistant:', existingAssistant.id);
-      return existingAssistant;
+      console.log('Found existing assistant:', existingAssistant.id);
+      // Always update the assistant with the latest system prompt (includes resume data)
+      const updated = await vapi.assistants.update({
+        id: existingAssistant.id,
+        model: {
+          provider: 'groq',
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_PROMPT,
+            },
+          ],
+        },
+      });
+      console.log('Assistant updated with latest resume context');
+      return updated;
     }
 
     // Create new assistant

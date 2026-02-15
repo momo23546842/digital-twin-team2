@@ -1,5 +1,5 @@
 import ChatPane from "@/components/ChatPane";
-import CallHistory from "../../app/components/CallHistory";
+import CallHistory from "@/components/CallHistory";
 import { Phone } from "lucide-react";
 
 export default function Home() {
