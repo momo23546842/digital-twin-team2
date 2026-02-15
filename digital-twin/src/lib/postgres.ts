@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { hashPassword } from './auth';
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
@@ -205,6 +206,48 @@ export async function initializeDatabase() {
       CREATE INDEX IF NOT EXISTS analytics_user_idx 
       ON analytics(user_id);
     `);
+
+    // ── Users & Sessions (for authentication) ─────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(255) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        password_hash TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);
+    `);
+
+    // Seed demo user if not exists (test@example.com / password123)
+    try {
+      const res = await client.query(`SELECT id FROM users WHERE email = $1`, ['test@example.com']);
+      if (res.rows.length === 0) {
+        const id = `user_${Date.now()}`;
+        const pwHash = hashPassword('password123');
+        await client.query(
+          `INSERT INTO users (id, email, name, password_hash) VALUES ($1, $2, $3, $4)`,
+          [id, 'test@example.com', 'Demo User', pwHash]
+        );
+        console.log('Seeded demo user: test@example.com');
+      }
+    } catch (seedErr) {
+      console.warn('Failed to seed demo user:', seedErr);
+    }
 
     console.log("Database initialized successfully");
   } catch (error) {

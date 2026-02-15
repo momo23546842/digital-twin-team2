@@ -1,3 +1,188 @@
+import prisma from './prisma';
+import type { Visitor, Conversation, Interaction } from '@prisma/client';
+
+// ==========================================
+// Visitor Operations
+// ==========================================
+
+/**
+ * Create or update a visitor
+ * If email exists, update the visitor; otherwise create new
+ */
+export async function upsertVisitor(data: {
+  email?: string;
+  name?: string;
+  phone?: string;
+  company?: string;
+  role?: string;
+}): Promise<Visitor> {
+  try {
+    if (data.email) {
+      return await prisma.visitor.upsert({
+        where: { email: data.email },
+        update: {
+          name: data.name ?? undefined,
+          phone: data.phone ?? undefined,
+          company: data.company ?? undefined,
+          role: data.role ?? undefined,
+        },
+        create: data as any,
+      });
+    }
+
+    return await prisma.visitor.create({
+      data: data as any,
+    });
+  } catch (error: any) {
+    console.error('upsertVisitor error:', error?.message ?? error);
+    throw new Error('Failed to upsert visitor');
+  }
+}
+
+/**
+ * Get visitor by ID
+ */
+export async function getVisitorById(id: string): Promise<Visitor | null> {
+  try {
+    return await prisma.visitor.findUnique({ where: { id } });
+  } catch (error: any) {
+    console.error('getVisitorById error:', error?.message ?? error);
+    throw new Error('Failed to get visitor by id');
+  }
+}
+
+/**
+ * Get visitor by email
+ */
+export async function getVisitorByEmail(email: string): Promise<Visitor | null> {
+  try {
+    return await prisma.visitor.findUnique({ where: { email } });
+  } catch (error: any) {
+    console.error('getVisitorByEmail error:', error?.message ?? error);
+    throw new Error('Failed to get visitor by email');
+  }
+}
+
+// ==========================================
+// Conversation Operations
+// ==========================================
+
+/**
+ * Save a conversation message
+ */
+export async function saveConversation(
+  visitorId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  metadata?: any
+): Promise<Conversation> {
+  try {
+    return await prisma.conversation.create({
+      data: {
+        visitorId,
+        role,
+        content,
+        metadata,
+      },
+    });
+  } catch (error: any) {
+    console.error('saveConversation error:', error?.message ?? error);
+    throw new Error('Failed to save conversation');
+  }
+}
+
+/**
+ * Get conversation history for a visitor
+ */
+export async function getConversationHistory(
+  visitorId: string,
+  limit: number = 50
+): Promise<Conversation[]> {
+  try {
+    return await prisma.conversation.findMany({
+      where: { visitorId },
+      orderBy: { timestamp: 'asc' },
+      take: limit,
+    });
+  } catch (error: any) {
+    console.error('getConversationHistory error:', error?.message ?? error);
+    throw new Error('Failed to get conversation history');
+  }
+}
+
+/**
+ * Get recent conversations across all visitors
+ */
+export async function getRecentConversations(limit: number = 20): Promise<Conversation[]> {
+  try {
+    return await prisma.conversation.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+      include: { visitor: true },
+    });
+  } catch (error: any) {
+    console.error('getRecentConversations error:', error?.message ?? error);
+    throw new Error('Failed to get recent conversations');
+  }
+}
+
+// ==========================================
+// Interaction Operations
+// ==========================================
+
+/**
+ * Save interaction metadata
+ */
+export async function saveInteraction(data: {
+  visitorId: string;
+  sessionId: string;
+  interestSignals?: any;
+  sessionDuration?: number;
+  bookingRequest?: boolean;
+}): Promise<Interaction> {
+  try {
+    return await prisma.interaction.create({ data } as any);
+  } catch (error: any) {
+    console.error('saveInteraction error:', error?.message ?? error);
+    throw new Error('Failed to save interaction');
+  }
+}
+
+/**
+ * Update interaction metadata
+ */
+export async function updateInteraction(
+  id: string,
+  data: {
+    interestSignals?: any;
+    sessionDuration?: number;
+    bookingRequest?: boolean;
+  }
+): Promise<Interaction> {
+  try {
+    return await prisma.interaction.update({ where: { id }, data } as any);
+  } catch (error: any) {
+    console.error('updateInteraction error:', error?.message ?? error);
+    throw new Error('Failed to update interaction');
+  }
+}
+
+/**
+ * Get interactions for a visitor
+ */
+export async function getVisitorInteractions(visitorId: string): Promise<Interaction[]> {
+  try {
+    return await prisma.interaction.findMany({
+      where: { visitorId },
+      orderBy: { timestamp: 'desc' },
+    });
+  } catch (error: any) {
+    console.error('getVisitorInteractions error:', error?.message ?? error);
+    throw new Error('Failed to get visitor interactions');
+  }
+}
+
+export default prisma;
 import { getPool, ensureInitialized } from "./postgres";
 
 /**

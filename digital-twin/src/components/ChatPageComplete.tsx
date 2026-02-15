@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sidebar, Settings, LogOut, History } from 'lucide-react';
+import { Sidebar, Settings, LogOut, History, Mic } from 'lucide-react';
 import MessageList from '@/components/MessageListEnhanced';
 import ChatInputEnhanced from '@/components/ChatInputEnhanced';
 import ContactForm from '@/components/ContactForm';
-import CallScreen from '@/components/CallScreen';
+import PhoneCallModal from '@/components/PhoneCallModal';
+import VisitorInfoDialog from '@/components/VisitorInfoDialog';
+import { VoiceRecognition, VoiceSynthesis } from '@/lib/speech';
 import type { Message, Conversation } from '@/types';
 
 interface ChatPageProps {
@@ -28,9 +30,18 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
   const [showContactForm, setShowContactForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState<Conversation[]>([]);
+  const [showVisitorDialog, setShowVisitorDialog] = useState(false);
+  const [visitorInfo, setVisitorInfo] = useState<any>(null);
+  const [visitorId, setVisitorId] = useState<string>('');
+  const [voiceRecognition] = useState(() => new VoiceRecognition());
+  const [voiceSynthesis] = useState(() => new VoiceSynthesis());
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [continuousVoice, setContinuousVoice] = useState(false);
   
   // Call screen state
-  const [isCallOpen, setIsCallOpen] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
 
   // Initialize session
   useEffect(() => {
@@ -39,6 +50,23 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
       setSessionId(newSessionId);
     }
   }, [sessionId]);
+
+  // Visitor ID and info
+  useEffect(() => {
+    try {
+      let vid = localStorage.getItem('visitorId');
+      if (!vid) {
+        vid = `visitor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('visitorId', vid);
+      }
+      setVisitorId(vid);
+
+      const stored = localStorage.getItem('visitorInfo');
+      if (stored) setVisitorInfo(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Failed to access localStorage for visitorId/info', e);
+    }
+  }, []);
 
   // Initialize conversation
   useEffect(() => {
@@ -81,13 +109,13 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     fetchHistory();
   }, []);
 
-  // Call handlers
+  // Call handlers (opens phone call modal)
   const handleStartCall = useCallback(() => {
-    setIsCallOpen(true);
+    setShowPhoneModal(true);
   }, []);
 
   const handleEndCall = useCallback(() => {
-    setIsCallOpen(false);
+    setShowPhoneModal(false);
   }, []);
 
   const handleSendMessage = async (content: string) => {
@@ -107,7 +135,7 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-visitor-id': visitorId },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           session_id: sessionId,
@@ -149,6 +177,122 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Voice input handler
+  const handleVoiceInput = () => {
+    if (!voiceRecognition.isSupported()) {
+      alert('Voice input is not supported in this browser');
+      return;
+    }
+
+    if (isListening) {
+      voiceRecognition.stopListening();
+      setIsListening(false);
+      setTranscript('');
+      return;
+    }
+
+    setIsListening(true);
+    voiceRecognition.startListening(
+      (text: string, isFinal: boolean) => {
+        setTranscript(text);
+        if (isFinal) {
+          // send message and stop
+          handleSendMessage(text);
+          setTranscript('');
+          setIsListening(false);
+        }
+      },
+      (err) => {
+        console.error('Voice recognition error:', err);
+        setIsListening(false);
+        alert('Voice recognition error. Please try again.');
+      }
+    );
+  };
+
+  const speakResponse = (text: string) => {
+    if (!voiceSynthesis.isSupported()) {
+      console.warn('Voice synthesis not supported');
+      return;
+    }
+
+    const utter = voiceSynthesis.speak(text, {
+      lang: 'en-US',
+      rate: 1.0,
+      pitch: 1.0,
+      volume: 1.0,
+    }) as SpeechSynthesisUtterance | null;
+
+    if (!utter) return;
+    setIsSpeaking(true);
+    utter.onend = () => {
+      setIsSpeaking(false);
+      // If continuous voice mode, restart listening
+      if (continuousVoice && voiceRecognition.isSupported()) {
+        setTimeout(() => {
+          handleVoiceInput();
+        }, 300);
+      }
+    };
+  };
+
+  // Auto-speak assistant responses when in voice mode or continuous phone mode
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (last.role === 'assistant' && (isListening || continuousVoice)) {
+      try {
+        speakResponse(last.content);
+      } catch (e) {
+        console.warn('speakResponse failed', e);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
+
+  const handlePhoneCall = () => {
+    setContinuousVoice((prev) => {
+      const next = !prev;
+      if (!next) {
+        // turning off continuous mode: stop any listening/speaking
+        try {
+          voiceRecognition.stopListening();
+        } catch {}
+        try {
+          voiceSynthesis.cancel();
+        } catch {}
+        setIsListening(false);
+        setIsSpeaking(false);
+      } else {
+        // enabling continuous mode: start listening immediately
+        if (voiceRecognition.isSupported() && !isListening) {
+          handleVoiceInput();
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleVisitorInfoSubmit = async (info: any) => {
+    setVisitorInfo(info);
+    try {
+      localStorage.setItem('visitorInfo', JSON.stringify(info));
+    } catch (e) {
+      console.warn('Failed to write visitorInfo to localStorage', e);
+    }
+
+    // Send to backend
+    try {
+      await fetch('/api/visitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitorId, ...info }),
+      });
+    } catch (error) {
+      console.error('Failed to save visitor info:', error);
     }
   };
 
@@ -238,10 +382,18 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowContactForm(!showContactForm)}
+              onClick={handleVoiceInput}
+              title={isListening ? 'Stop listening' : 'Start voice input'}
+              className={`p-2 rounded ${isListening ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-white'} hover:opacity-90 transition-colors`}
+            >
+              <Mic size={16} />
+            </button>
+
+            <button
+              onClick={() => setShowVisitorDialog(true)}
               className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition-colors text-sm"
             >
-              {showContactForm ? 'Hide Contact Form' : 'Share Contact'}
+              Share Contact
             </button>
           </div>
         </header>
@@ -251,13 +403,19 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
           {/* Messages */}
           <div className="flex-1 flex flex-col bg-slate-800 border border-slate-700 rounded-lg overflow-hidden relative">
             <MessageList messages={messages} isLoading={isLoading} />
-            
+            {isListening && (
+              <div className="absolute left-4 bottom-20 bg-emerald-600/90 text-white px-3 py-2 rounded-md shadow-md z-20">
+                <div className="text-xs font-medium">Listening…</div>
+                <div className="text-sm mt-1">{transcript}</div>
+              </div>
+            )}
+
             <ChatInputEnhanced
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               disabled={!conversationId}
               onStartCall={handleStartCall}
-              isInCall={isCallOpen}
+              isInCall={showPhoneModal}
             />
           </div>
 
@@ -295,11 +453,21 @@ export default function ChatPage({ initialSessionId }: ChatPageProps) {
       )}
 
       {/* Call Screen Overlay */}
-      <CallScreen
-        isOpen={isCallOpen}
-        contactName="Digital Twin"
-        onEndCall={handleEndCall}
+      <VisitorInfoDialog
+        open={showVisitorDialog}
+        onClose={() => setShowVisitorDialog(false)}
+        onSubmit={handleVisitorInfoSubmit}
+      />
+
+      <PhoneCallModal
+        open={showPhoneModal}
         onClose={handleEndCall}
+        onSendMessage={async (msg) => {
+          await handleSendMessage(msg);
+          // return assistant's last message text to speak
+          const last = messages[messages.length - 1];
+          return last && last.role === 'assistant' ? last.content : 'Hmm, I have no response yet.';
+        }}
       />
     </div>
   );

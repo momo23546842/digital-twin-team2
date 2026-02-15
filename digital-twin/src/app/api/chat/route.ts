@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { generateEmbeddings } from "@/lib/embeddings";
 import { querySimilarVectors } from "@/lib/postgres";
 import { callMcpTool, listMcpTools } from "@/lib/mcp-client";
+import { upsertVisitor, saveConversation, getConversationHistory } from '@/lib/db';
 import type { ChatRequestPayload, ChatResponsePayload } from "@/types";
 
 export const runtime = "nodejs";
@@ -162,8 +163,13 @@ export async function POST(req: NextRequest) {
   try {
     console.log("[CHAT API] Request received");
     
-    // Extract user ID for rate limiting
-    const userId = req.headers.get("x-user-id") || "anonymous";
+    // Extract visitor/session information
+    const visitorIdHeader = req.headers.get("x-visitor-id");
+    const cookieVisitorId = req.cookies?.get?.("visitorId")?.value;
+    const visitorId = visitorIdHeader || cookieVisitorId || `visitor-${Date.now()}`;
+
+    // Extract user ID for rate limiting (fallback to visitorId)
+    const userId = req.headers.get("x-user-id") || visitorId || "anonymous";
 
     // Rate limit check - wrap in try/catch
     try {
@@ -194,6 +200,36 @@ export async function POST(req: NextRequest) {
     // Get the latest user message for RAG context
     const lastMessage = payload.messages[payload.messages.length - 1];
 
+    // If visitor info provided in payload, persist it
+    if (payload.visitorInfo) {
+      try {
+        await upsertVisitor({
+          id: visitorId,
+          email: payload.visitorInfo.email,
+          name: payload.visitorInfo.name,
+          metadata: payload.visitorInfo.metadata || undefined,
+        });
+        console.log("[CHAT API] Visitor info upserted for", visitorId);
+      } catch (dbErr) {
+        console.warn("[CHAT API] upsertVisitor failed:", dbErr);
+      }
+    }
+
+    // Optionally load recent conversation history to include in prompt
+    let convoHistoryText = "";
+    try {
+      const history = await getConversationHistory(visitorId, 20);
+      if (history && history.length > 0) {
+        convoHistoryText = '\n\nRecent conversation history:\n' +
+          history
+            .map((m: any) => `${m.role}: ${m.content}`)
+            .join('\n');
+        console.log("[CHAT API] Loaded conversation history for", visitorId);
+      }
+    } catch (histErr) {
+      console.warn("[CHAT API] getConversationHistory failed:", histErr);
+    }
+
     // Fetch RAG context and MCP tool context in parallel
     console.log("[CHAT API] Fetching RAG and MCP context");
     const [ragContext, mcpContext] = await Promise.all([
@@ -206,7 +242,7 @@ export async function POST(req: NextRequest) {
     ]);
     console.log("[CHAT API] Context fetched. RAG:", !!ragContext, "MCP:", !!mcpContext);
 
-    const combinedContext = ragContext + mcpContext;
+    const combinedContext = convoHistoryText + ragContext + mcpContext;
 
     // Format messages for Groq API
     const groqMessages: Array<{ role: "user" | "assistant" | "system"; content: string }> = payload.messages.map((msg) => ({
@@ -237,6 +273,16 @@ ${combinedContext}`
       content: systemPrompt,
     });
 
+    // Persist the user's message before calling the AI
+    try {
+      if (lastMessage && lastMessage.role === 'user') {
+        await saveConversation(visitorId, 'user', lastMessage.content);
+        console.log('[CHAT API] Saved user message for', visitorId);
+      }
+    } catch (saveUserErr) {
+      console.warn('[CHAT API] Failed saving user message:', saveUserErr);
+    }
+
     // Call Groq API
     console.log("[CHAT API] Calling Groq API");
     const response = await callGroqChat(groqMessages);
@@ -259,8 +305,19 @@ ${combinedContext}`
       sessionId: payload.sessionId || `session-${Date.now()}`,
     };
 
+    // Persist assistant response
+    try {
+      await saveConversation(visitorId, 'assistant', response, {
+        ragEnabled: !!ragContext,
+        mcpEnabled: !!mcpContext,
+      } as any);
+      console.log('[CHAT API] Saved assistant message for', visitorId);
+    } catch (saveAssistErr) {
+      console.warn('[CHAT API] Failed saving assistant message:', saveAssistErr);
+    }
+
     console.log("[CHAT API] Sending response");
-    return NextResponse.json(responsePayload);
+    return NextResponse.json(responsePayload, { headers: { 'x-visitor-id': visitorId } });
   } catch (error) {
     console.error("[CHAT API] Critical error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

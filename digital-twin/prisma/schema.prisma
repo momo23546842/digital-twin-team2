@@ -1,0 +1,54 @@
+
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Visitor {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?        @unique
+  phone         String?
+  company       String?
+  role          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  interactions  Interaction[]
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  visitorId String
+  visitor   Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  role      String
+  content   String   @db.Text
+  timestamp DateTime @default(now())
+  metadata  Json?
+  
+  @@index([visitorId])
+  @@index([timestamp])
+}
+
+model Interaction {
+  id              String   @id @default(cuid())
+  visitorId       String
+  visitor         Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  sessionId       String
+  interestSignals Json?
+  sessionDuration Int?
+  bookingRequest  Boolean  @default(false)
+  timestamp       DateTime @default(now())
+
+  @@index([visitorId])
+  @@index([sessionId])
+}
+
+
+
