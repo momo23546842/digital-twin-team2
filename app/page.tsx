@@ -34,7 +34,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white dark:bg-slate-900 shadow-sm z-50">
         <div className="container flex items-center justify-between h-16">
-          <div className="text-2xl font-bold text-gradient">Twin</div>
+          <div className="text-2xl font-bold text-gradient">Digital Twin</div>
           <div className="flex gap-4 items-center">
             {!isAuthenticated && !loading && (
               <>
@@ -122,7 +122,7 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <a href="/chat" className="btn btn-primary text-lg px-8 py-3">
-              Start Text Chat
+              Start Chat
             </a>
             <a 
               href="tel:+15413038579"
@@ -131,7 +131,7 @@ export default function Home() {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
               </svg>
-              Or Call Me
+              Call Now
             </a>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="section bg-gray-50 dark:bg-slate-800">
         <div className="container">
-          <h2 className="text-4xl font-bold text-center mb-12">Key Features</h2>
+          <h2 className="text-4xl font-bold text-center mb-12">Features</h2>
           <div className="grid-auto-fit">
             <div className="card">
               <div className="text-4xl mb-4">💬</div>
@@ -191,26 +191,11 @@ export default function Home() {
 
             <div className="card">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-2">Analytics Dashboard</h3>
+              <h3 className="text-xl font-semibold mb-2">Analytics</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                View all conversations and leads in one place.
+                View all conversations and call history in one place.
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section className="section">
-        <div className="container max-w-3xl">
-          <h2 className="text-4xl font-bold mb-8 text-center">About Me</h2>
-          <div className="card">
-            <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-              I'm a full-stack engineer passionate about building innovative AI solutions and digital experiences. This digital twin represents my expertise in modern web technologies, AI/ML integration, and business problem-solving.
-            </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300">
-              Whether you want to discuss technology, explore collaboration opportunities, or just have a conversation about the future of AI, I'm here to help.
-            </p>
           </div>
         </div>
       </section>
@@ -220,11 +205,11 @@ export default function Home() {
         <div className="container text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Connect?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Start chatting now or call to discover how I can help you achieve your goals.
+            Start chatting or call now to discover how I can help you achieve your goals.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <a href="/chat" className="btn bg-white text-primary hover:bg-gray-100 text-lg px-8 py-3">
-              Launch Digital Twin
+              Launch Chat
             </a>
             <a
               href="tel:+15413038579"
