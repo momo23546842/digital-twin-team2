@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { callGroqChat } from '@/lib/groq';
 import { sendNotification } from '@/lib/notifications';
 
+
 /**
  * Verify Vapi webhook signature using HMAC-SHA256.
  */
@@ -18,16 +19,19 @@ function verifySignature(body: string, signature: string | null): boolean {
     return true; // Allow unsigned webhooks during development
   }
 
+
   try {
     const expected = crypto
       .createHmac('sha256', secret)
       .update(body)
       .digest('hex');
 
+
     // Try exact match first
     if (signature === expected) {
       return true;
     }
+
 
     // Try Buffer comparison
     try {
@@ -44,6 +48,7 @@ function verifySignature(body: string, signature: string | null): boolean {
   }
 }
 
+
 /**
  * Generate a concise summary of a phone call transcript.
  */
@@ -53,6 +58,7 @@ async function generateSummary(transcript: string): Promise<string> {
     if (!transcript || transcript.length < 10) {
       return 'Call completed with minimal transcript';
     }
+
 
     // Add a timeout to prevent hanging
     const summaryPromise = callGroqChat([
@@ -64,9 +70,11 @@ async function generateSummary(transcript: string): Promise<string> {
       { role: 'user', content: transcript },
     ]);
 
+
     const timeoutPromise = new Promise<string>((_, reject) =>
       setTimeout(() => reject(new Error('Summary generation timeout')), 10000),
     );
+
 
     const summary = await Promise.race([summaryPromise, timeoutPromise]);
     return summary;
@@ -75,6 +83,7 @@ async function generateSummary(transcript: string): Promise<string> {
     return `Call summary unavailable (${error instanceof Error ? error.message : 'Unknown error'})`;
   }
 }
+
 
 /**
  * Process a "call-started" event asynchronously.
@@ -86,10 +95,12 @@ async function handleCallStarted(payload: Record<string, any>) {
     const callerNumber: string =
       call.customer?.number ?? call.phoneNumber?.number ?? call.callerNumber ?? 'unknown';
 
+
     if (!prisma) {
       console.warn('[vapi-webhook] Prisma not initialized, skipping call-started');
       return;
     }
+
 
     try {
       await prisma.phoneCall.upsert({
@@ -106,6 +117,7 @@ async function handleCallStarted(payload: Record<string, any>) {
         },
       });
 
+
       console.log(`[vapi-webhook] call-started recorded: ${callId}`);
     } catch (err) {
       console.error('[vapi-webhook] failed to record call-started:', err);
@@ -114,6 +126,7 @@ async function handleCallStarted(payload: Record<string, any>) {
     console.error('[vapi-webhook] handleCallStarted error:', error);
   }
 }
+
 
 /**
  * Process a "call-ended" event asynchronously.
@@ -125,13 +138,16 @@ async function handleCallEnded(payload: Record<string, any>) {
     const callerNumber: string =
       call.customer?.number ?? call.phoneNumber?.number ?? call.callerNumber ?? 'unknown';
 
+
     const startedAt = call.startedAt ? new Date(call.startedAt) : null;
     const endedAt = call.endedAt ? new Date(call.endedAt) : new Date();
+
 
     const duration =
       startedAt && endedAt
         ? Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
         : null;
+
 
     // Build transcript text from messages array if present
     const transcript: string | null =
@@ -144,8 +160,10 @@ async function handleCallEnded(payload: Record<string, any>) {
               .join('\n')
           : null;
 
+
     const recordingUrl: string | null =
       call.recordingUrl ?? call.artifact?.recordingUrl ?? null;
+
 
     // Generate summary from transcript (with error handling)
     let summary: string | null = null;
@@ -157,6 +175,7 @@ async function handleCallEnded(payload: Record<string, any>) {
         summary = 'Failed to generate summary';
       }
     }
+
 
     // Store in database with fallback if Prisma fails
     let record: any = null;
@@ -185,6 +204,7 @@ async function handleCallEnded(payload: Record<string, any>) {
           },
         });
 
+
         console.log(
           `[vapi-webhook] call-ended recorded: ${callId} (${duration ?? '?'}s)`,
         );
@@ -210,6 +230,7 @@ async function handleCallEnded(payload: Record<string, any>) {
       };
     }
 
+
     // Send notifications if we have a record
     if (record) {
       try {
@@ -223,6 +244,7 @@ async function handleCallEnded(payload: Record<string, any>) {
   }
 }
 
+
 /**
  * POST /api/webhooks/vapi
  *
@@ -234,12 +256,14 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     console.log('[vapi-webhook] Raw webhook received, length:', rawBody.length);
 
+
     // Verify webhook signature (lenient during development)
     const signature = request.headers.get('x-vapi-signature');
     if (!verifySignature(rawBody, signature)) {
       console.warn('[vapi-webhook] signature verification failed, but continuing');
       // Don't reject - continue processing
     }
+
 
     let body: Record<string, any>;
     try {
@@ -250,11 +274,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON', details: String(err) }, { status: 400 });
     }
 
+
     const event: string | undefined =
       body.message?.type ?? body.type ?? body.event;
 
+
     console.log('[vapi-webhook] Received event:', event);
     console.log('[vapi-webhook] Payload keys:', Object.keys(body));
+
 
     // Fire-and-forget: process in the background so we return 200 quickly.
     // Any errors are logged but do not affect the response.
@@ -268,6 +295,7 @@ export async function POST(request: NextRequest) {
           );
           break;
 
+
         case 'call-ended':
         case 'call.ended':
         case 'end-of-call-report':
@@ -277,6 +305,7 @@ export async function POST(request: NextRequest) {
           );
           break;
 
+
         default:
           console.log(`[vapi-webhook] Unhandled event type: ${event}`);
           console.log('[vapi-webhook] Full payload:', JSON.stringify(body, null, 2).substring(0, 1000));
@@ -285,6 +314,7 @@ export async function POST(request: NextRequest) {
       console.log('[vapi-webhook] No event type found in payload');
       console.log('[vapi-webhook] Full payload:', JSON.stringify(body, null, 2).substring(0, 1000));
     }
+
 
     // Always return 200 OK to acknowledge receipt
     return NextResponse.json({ received: true, event }, { status: 200 });
