@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import PhoneCallModal from './components/PhoneCallModal';
+import VapiCallCard from './components/VapiCallCard';
 
 export default function Home() {
   const { user, isAuthenticated, login, logout, loading } = useAuth();
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -67,20 +66,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Floating Phone Button */}
-      <button
-        onClick={() => setShowPhoneModal(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-full shadow-2xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
-        aria-label="Open phone"
-      >
-        <svg className="w-7 h-7 group-hover:animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-        </svg>
-      </button>
-
-      {/* Phone Modal */}
-      <PhoneCallModal isOpen={showPhoneModal} onClose={() => setShowPhoneModal(false)} />
-
       {/* Login Form Modal */}
       {showLoginForm && !isAuthenticated && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 mt-16">
@@ -137,18 +122,25 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <a href="/chat" className="btn btn-primary text-lg px-8 py-3">
-              Start Conversation
+              Start Text Chat
             </a>
-            <button 
-              onClick={() => setShowPhoneModal(true)}
+            <a 
+              href="tel:+15413038579"
               className="btn btn-outline text-lg px-8 py-3 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
               </svg>
-              Call Now
-            </button>
+              Or Call Me
+            </a>
           </div>
+        </div>
+      </section>
+
+      {/* Vapi Call Card Section */}
+      <section className="section">
+        <div className="container max-w-5xl">
+          <VapiCallCard />
         </div>
       </section>
 
@@ -169,7 +161,7 @@ export default function Home() {
               <div className="text-4xl mb-4">📞</div>
               <h3 className="text-xl font-semibold mb-2">Voice Calls</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Call directly from the app. Natural voice conversations with AI.
+                Call the AI phone number directly. Natural voice conversations 24/7.
               </p>
             </div>
 
@@ -228,21 +220,21 @@ export default function Home() {
         <div className="container text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Connect?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Start chatting now and discover how I can help you achieve your goals.
+            Start chatting now or call to discover how I can help you achieve your goals.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <a href="/chat" className="btn bg-white text-primary hover:bg-gray-100 text-lg px-8 py-3">
               Launch Digital Twin
             </a>
-            <button
-              onClick={() => setShowPhoneModal(true)}
+            <a
+              href="tel:+15413038579"
               className="btn bg-white/10 hover:bg-white/20 text-white border-2 border-white text-lg px-8 py-3 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
               </svg>
-              Or Call Me
-            </button>
+              Call +1 541 303 8579
+            </a>
           </div>
         </div>
       </section>
