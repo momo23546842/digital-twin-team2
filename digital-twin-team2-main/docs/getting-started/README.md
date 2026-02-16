@@ -1,21 +1,24 @@
-# 🤖 Digital Twin 
+# 🤖 Digital Twin AI Interview Agent
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue)
-![Database](https://img.shields.io/badge/Database-Neon%20Postgres-green)
-![Groq](https://img.shields.io/badge/AI-Groq%20API-orange)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-blue)
+![AI](https://img.shields.io/badge/AI-Groq%20+%20Voice-orange)
 
-> **⚡ START HERE: Get running in 5 minutes with [QUICKSTART.md](./digital-twin/QUICKSTART.md)**
+### ⚡ Quick Links
+- **🚀 [Get Started in 5 Minutes](./QUICKSTART.md)** - Quick setup guide
+- **📖 [Full Documentation](./docs/getting-started/)** - Complete guides
+- **🔒 [Security Guide](./docs/security/SECURITY.md)** - Important security info
 
-## 🔐 SECURITY WARNING - READ FIRST
+## 🔐 SECURITY NOTICE
 
-**⚠️ CRITICAL**: A `.env.local` file with sensitive credentials was previously committed to this repository. **See [SECURITY.md](./SECURITY.md) for immediate action required.**
+**⚠️ IMPORTANT**: A `.env.local` file with sensitive credentials was previously committed. **See [SECURITY.md](../security/SECURITY.md) for immediate actions required.**
 
-**If you cloned this repo before February 14, 2026:**
-- DO NOT use the exposed credentials
-- Generate NEW API keys and database credentials
-- Follow the security checklist in [SECURITY.md](./SECURITY.md)
+**If you cloned before Feb 14, 2026:**
+- ❌ DO NOT use the exposed credentials
+- ✅ Generate NEW API keys and database credentials  
+- ✅ Follow the security checklist in [SECURITY.md](../security/SECURITY.md)
 
 ## 🎯 Overview
 

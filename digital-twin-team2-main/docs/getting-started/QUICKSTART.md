@@ -1,102 +1,193 @@
-# PostgreSQL Migration - Quick Start Guide
+# ⚡ Quick Start Guide - 5 Minutes
 
-## What Was Done ✅
+Get Digital Twin running locally in 5 minutes or less!
 
-Your Digital Twin application has been successfully migrated from Upstash to PostgreSQL. Here's what was implemented:
+> **👉 New to the project?** Read [README.md](./README.md) first (2 min)
 
-### New Files Created
-```
-digital-twin/src/lib/
-├── postgres.ts          ✨ PostgreSQL connection & vector operations (replaces @upstash/vector)
-├── db.ts                ✨ Database utilities & caching (replaces redis.ts)
-├── rateLimit.ts         ✨ Rate limiting implementation (replaces Redis rate limits)
-├── init-db.ts           ✨ Database schema initialization script
-└── cleanup-db.ts        ✨ Cleanup script for expired data
+---
 
-Root directory/
-├── POSTGRES_MIGRATION.md        ✨ Complete setup & troubleshooting guide
-├── MIGRATION_IMPLEMENTATION.md  ✨ Technical implementation details
-└── MIGRATION_CHECKLIST.md       ✨ Step-by-step deployment checklist
-```
+## ✅ Prerequisites
 
-### Files Modified
-```
-digital-twin/
-├── package.json              ✏️  Updated dependencies (removed @upstash/*, added pg, pgvector)
-├── src/app/api/ingest/route.ts   ✏️  Updated imports & database calls
-├── src/app/api/chat/route.ts     ✏️  Updated imports & rate limit calls
-└── .env.local.example            ✨ Environment template for PostgreSQL
-```
+Before you start, ensure you have:
 
-### Old Files (Can Be Removed)
-```
-digital-twin/src/lib/
-├── redis.ts              ❌ Replaced by db.ts
-└── vector.ts             ❌ Replaced by postgres.ts
-```
+- **Node.js 18+** ([Download](https://nodejs.org))
+- **PostgreSQL 12+** or Docker installed ([Get Docker](https://www.docker.com))
+- **Groq API Key** (Free tier available at [console.groq.com](https://console.groq.com))
 
-## 5-Minute Quick Start
+---
 
-### Step 1: Set Up PostgreSQL (5 min)
+## 🚀 Setup Steps (5 Min Total)
 
-**Using Docker (Easiest):**
+### Step 1: Start PostgreSQL (1 min)
+
+**Option A: Docker (Easiest)**
 ```bash
 docker run --name postgres-dt \
-  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=digital_twin \
   -p 5432:5432 \
   -d pgvector/pgvector:pg16
 ```
 
-**Using Local PostgreSQL:**
+**Option B: Local PostgreSQL**
 ```sql
--- Connect to PostgreSQL as admin
 CREATE DATABASE digital_twin;
-CREATE USER digital_twin_user WITH PASSWORD 'mypassword';
+CREATE USER digital_twin_user WITH PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE digital_twin TO digital_twin_user;
-
 -- Connect to digital_twin database
 \c digital_twin
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### Step 2: Configure Application (2 min)
-
-Update `.env.local`:
-```env
-DATABASE_URL=postgresql://digital_twin_user:mypassword@localhost:5432/digital_twin
-GROQ_API_KEY=your_api_key
-```
-
-### Step 3: Initialize Database (1 min)
+### Step 2: Configure Application (1 min)
 
 ```bash
+# Navigate to digital-twin folder
 cd digital-twin
-npm install  # Install new dependencies
-npx ts-node src/lib/init-db.ts  # Create tables
+
+# Copy env template
+cp .env.example .env.local
+
+# Edit .env.local - Add your credentials:
 ```
 
-### Step 4: Test It (2 min)
+Edit `.env.local`:
+```env
+DATABASE_URL=postgresql://digital_twin_user:password@localhost:5432/digital_twin
+GROQ_API_KEY=your_groq_api_key_here
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+### Step 3: Install & Initialize (2 min)
+
+```bash
+# Install dependencies
+npm install
+
+# Initialize database and create tables
+npx ts-node src/lib/init-db.ts
+```
+
+### Step 4: Start Development Server (1 min)
 
 ```bash
 npm run dev
-# App should be running on http://localhost:3000
 ```
 
-Test ingestion:
+Open http://localhost:3000 in your browser. Done! 🎉
+
+---
+
+## ✨ What You Get
+
+- ✅ AI chat interface with voice support
+- ✅ PostgreSQL vector database for document storage
+- ✅ Admin dashboard for monitoring
+- ✅ Real-time conversations with persistent memory
+
+---
+
+## 🧪 Quick Test
+
+### Test the Chat API
+```bash
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: test-user" \
+  -d '{
+    "messages": [{
+      "role": "user",
+      "content": "Hello! Who are you?"
+    }]
+  }'
+```
+
+### Test Document Ingestion
 ```bash
 curl -X POST http://localhost:3000/api/ingest \
   -H "Content-Type: application/json" \
   -d '{
     "documents": [{
-      "id": "test",
-      "content": "Hello world!",
-      "title": "Test Document"
+      "id": "doc-1",
+      "content": "Your document content here",
+      "title": "Document Title"
     }]
   }'
 ```
 
-## What Changed?
+---
+
+## 📋 What Was Implemented
+
+This project uses:
+
+| Component | Technology | Why |
+|-----------|-----------|-----|
+| **Framework** | Next.js 16 | Full-stack JavaScript with TypeScript |
+| **Backend** | Node.js API Routes | Real-time processing |
+| **Database** | PostgreSQL + pgvector | Vector embeddings + relational data |
+| **AI Engine** | Groq API | Sub-second response times |
+| **Frontend** | React + Tailwind | Responsive UI with voice |
+| **Deployment** | Vercel | Serverless deployment |
+
+---
+
+## 🆘 Troubleshooting
+
+### "Cannot connect to database"
+```bash
+# Check database is running
+docker ps  # Should show postgres-dt container
+
+# Verify DATABASE_URL in .env.local
+# Should be: postgresql://user:password@localhost:5432/digital_twin
+```
+
+### "Module not found"
+```bash
+# Reinstall dependencies
+rm -rf node_modules
+npm install
+```
+
+### "GROQ_API_KEY is not set"
+```bash
+# Make sure .env.local has:
+GROQ_API_KEY=your_actual_api_key_here
+
+# Get key from: https://console.groq.com/keys
+```
+
+### "Port 3000 already in use"
+```bash
+# Use different port
+npm run dev -- -p 3001
+```
+
+---
+
+## 📚 Next Steps
+
+1. **Explore the UI** - Chat with the AI at http://localhost:3000
+2. **Read Full Guide** - [00_READ_ME_FIRST.md](./00_READ_ME_FIRST.md)
+3. **Understand Architecture** - [../implementation/MIGRATION_IMPLEMENTATION.md](../implementation/MIGRATION_IMPLEMENTATION.md)
+4. **Deploy** - [../database/POSTGRES_MIGRATION.md](../database/POSTGRES_MIGRATION.md#production-deployment)
+
+---
+
+## 📖 Full Documentation
+
+- Complete setup: [00_READ_ME_FIRST.md](./00_READ_ME_FIRST.md)
+- Database guide: [../database/POSTGRES_MIGRATION.md](../database/POSTGRES_MIGRATION.md)
+- Security info: [../security/SECURITY.md](../security/SECURITY.md)
+- Deployment checklist: [../implementation/MIGRATION_CHECKLIST.md](../implementation/MIGRATION_CHECKLIST.md)
+- All docs: [../INDEX.md](../INDEX.md)
+
+---
+
+**Started:** February 17, 2026  
+**Version:** 1.0  
+**Status:** Production Ready ✅
 
 ### API Endpoints (No Changes Needed)
 - `/api/ingest` - Still works the same way ✓

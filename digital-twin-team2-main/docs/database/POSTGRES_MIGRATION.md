@@ -1,53 +1,200 @@
-# PostgreSQL Migration Guide
+# 🗄️ PostgreSQL Migration & Setup Guide
 
-This document outlines the migration from Upstash (Redis + Vector DB) to PostgreSQL with pgvector.
+Complete guide for migrating from Upstash to PostgreSQL with pgvector for vector embeddings.
 
-## Prerequisites
+> **Quick Start?** Go to [../getting-started/QUICKSTART.md](../getting-started/QUICKSTART.md) for 5-minute setup
 
-1. **PostgreSQL** installed (v12 or higher)
-2. **pgvector extension** installed
-3. A running PostgreSQL server with network access
+---
 
-## Installation Steps
+## 📋 Prerequisites
 
-### 1. Install PostgreSQL and pgvector
+- **PostgreSQL** 12+ or Docker installed
+- **pgvector** extension (comes with Docker image)
+- Node.js 18+ installed
+- Groq API key (from [console.groq.com](https://console.groq.com))
 
-**On Windows (using PostgreSQL installer):**
-```bash
-# Download PostgreSQL from https://www.postgresql.org/download/windows/
-# During installation, make sure to install pgAdmin for easy database management
-```
+---
 
-**Using Docker (Recommended for development):**
+## 🚀 Installation (Choose One)
+
+### Option A: Docker (Easiest - Recommended)
+
+**1. Start PostgreSQL container:**
 ```bash
 docker run --name postgres-digital-twin \
   -e POSTGRES_PASSWORD=yourpassword \
   -e POSTGRES_DB=digital_twin \
+  -e POSTGRES_INITDB_ARGS="-c max_parallel_workers_per_gather=4" \
   -p 5432:5432 \
   -d pgvector/pgvector:pg16
 ```
 
-### 2. Create Database and User
+**2. Verify it's running:**
+```bash
+docker ps  # Should show postgres-digital-twin running
+```
 
+**3. Test connection:**
+```bash
+docker exec -it postgres-digital-twin psql -U postgres -d digital_twin
+# Type: \dt  (to see tables)
+# Type: \q   (to quit)
+```
+
+### Option B: Windows (Local PostgreSQL)
+
+**1. Download & Install:**
+- Visit https://www.postgresql.org/download/windows/
+- Install PostgreSQL 12 or higher
+- Remember the admin password
+
+**2. Open PostgreSQL Command Line:**
+```bash
+psql -U postgres
+```
+
+**3. Create database and pgvector:**
 ```sql
--- Connect to PostgreSQL as superuser, then run:
 CREATE DATABASE digital_twin;
-
-CREATE USER digital_twin_user WITH PASSWORD 'your_secure_password';
-
+CREATE USER digital_twin_user WITH PASSWORD 'yourpassword';
 GRANT ALL PRIVILEGES ON DATABASE digital_twin TO digital_twin_user;
 
--- Connect to the digital_twin database and enable pgvector
+-- Connect to the new database
 \c digital_twin
+
+-- Enable pgvector
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### 3. Environment Variables
+### Option C: macOS (Homebrew)
 
-Update your `.env.local` file:
+```bash
+# Install PostgreSQL
+brew install postgresql@16 pgvector
+
+# Start service
+brew services start postgresql@16
+
+# Create database
+createdb digital_twin
+
+# Connect and setup
+psql digital_twin
+```
+
+---
+
+## ⚙️ Configuration
+
+### Step 1: Set Environment Variables
+
+Create or update `.env.local` in the `digital-twin` folder:
 
 ```env
-# Remove old Upstash variables:
+# Database Connection
+DATABASE_URL=postgresql://digital_twin_user:yourpassword@localhost:5432/digital_twin
+
+# Groq AI API
+GROQ_API_KEY=gsk_your_api_key_here
+
+# Application URL
+NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# (Optional) JWT Secret for authentication
+JWT_SECRET=your_random_secret_key_here
+
+# (Optional) Rate limiting
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW=3600
+```
+
+### Step 2: Verify Connection
+
+```bash
+# Test connection string
+psql postgresql://digital_twin_user:yourpassword@localhost:5432/digital_twin
+
+# You should see: digital_twin=>
+# Type: \q to exit
+```
+
+---
+
+## 🔧 Initialize Database
+
+### Run Initialization Script
+
+```bash
+cd digital-twin
+npm install
+npx ts-node src/lib/init-db.ts
+```
+
+### What Gets Created
+
+The initialization script creates these tables:
+
+**1. `vectors` table** - Stores document embeddings
+```sql
+CREATE TABLE vectors (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  embedding vector(1536),
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**2. `database_cache` table** - Caching layer
+```sql
+CREATE TABLE database_cache (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**3. `rate_limits` table** - API rate limiting
+```sql
+CREATE TABLE rate_limits (
+  user_id TEXT,
+  request_count INTEGER DEFAULT 1,
+  window_start TIMESTAMP,
+  PRIMARY KEY (user_id, window_start)
+);
+```
+
+**4. `ingestion_metadata` table** - Tracks document ingestion
+```sql
+CREATE TABLE ingestion_metadata (
+  id TEXT PRIMARY KEY,
+  source TEXT,
+  status TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Verify Tables Were Created
+
+```bash
+# Connect to database
+psql postgresql://digital_twin_user:yourpassword@localhost:5432/digital_twin
+
+# List tables
+\dt
+
+# Should show:
+# vectors
+# database_cache  
+# rate_limits
+# ingestion_metadata
+```
+
+---
+
+## 📊 Installation Steps
 # UPSTASH_REDIS_REST_URL=...
 # UPSTASH_REDIS_REST_TOKEN=...
 # UPSTASH_VECTOR_REST_URL=...
