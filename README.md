@@ -1,4 +1,4 @@
-# 🤖 Digital Twin 
+# 🤖 Digital Twin
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
@@ -331,6 +331,18 @@ MIT License
 5. **Deploy**: Follow [DEPLOYMENT_CHECKLIST.md](./digital-twin/DEPLOYMENT_CHECKLIST.md)
 
 ---
+
+**Questions?** Read [QUICKSTART.md](./digital-twin/QUICKSTART.md) for detailed guide!
+
+Made with ❤️ for Digital Twin Team 2
+* Ensure you are using `https://` or `localhost`.
+
+## 🤝 Contributing
+
+1. Create a feature branch: `git checkout -b feature/your-feature`
+2. Commit changes: `git commit -m "Add your feature"`
+3. Push to branch: `git push origin feature/your-feature`
+4. Open a Pull Request
 
 ## ✅ Acceptance Criteria (From PRD)
 

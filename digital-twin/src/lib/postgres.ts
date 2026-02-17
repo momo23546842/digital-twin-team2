@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
 let pool: Pool | null = null;
@@ -11,7 +11,7 @@ export function getPool(): Pool {
     }
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      max: 20,
+      max: 20, // Maximum number of connections
     });
   }
   return pool;
@@ -24,6 +24,7 @@ export async function ensureInitialized() {
     initialized = true;
   } catch (error) {
     console.error("Failed to initialize database:", error);
+    // Don't set initialized to true so it retries next time
     throw error;
   }
 }
@@ -34,7 +35,7 @@ export async function ensureInitialized() {
 export async function initializeDatabase() {
   const client = await getPool().connect();
   try {
-    // Enable pgvector extension
+    // Try to enable pgvector extension (optional for now)
     try {
       await client.query("CREATE EXTENSION IF NOT EXISTS vector;");
       console.log("pgvector extension enabled");
@@ -42,7 +43,7 @@ export async function initializeDatabase() {
       console.warn("pgvector extension not available, using JSONB for embeddings");
     }
 
-    // ── Vectors ──────────────────────────────────────────────────────────────
+    // Create vectors table (works with or without pgvector)
     await client.query(`
       CREATE TABLE IF NOT EXISTS vectors (
         id TEXT PRIMARY KEY,
@@ -54,12 +55,13 @@ export async function initializeDatabase() {
       );
     `);
 
+    // Create GIN index for JSONB queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS vectors_embedding_idx 
       ON vectors USING gin (embedding jsonb_path_ops);
     `);
 
-    // ── Ingestion metadata ────────────────────────────────────────────────────
+    // Create ingestion metadata table
     await client.query(`
       CREATE TABLE IF NOT EXISTS ingestion_metadata (
         id TEXT PRIMARY KEY,
@@ -72,12 +74,13 @@ export async function initializeDatabase() {
       );
     `);
 
+    // Create index for ingestion metadata queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS ingestion_metadata_user_idx 
       ON ingestion_metadata(user_id);
     `);
 
-    // ── Cache ─────────────────────────────────────────────────────────────────
+    // Create database cache table
     await client.query(`
       CREATE TABLE IF NOT EXISTS database_cache (
         key TEXT PRIMARY KEY,
@@ -88,7 +91,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // ── Rate limits ───────────────────────────────────────────────────────────
+    // Create rate limiting table
     await client.query(`
       CREATE TABLE IF NOT EXISTS rate_limits (
         key TEXT PRIMARY KEY,
@@ -98,113 +101,25 @@ export async function initializeDatabase() {
       );
     `);
 
+    // Create index for rate limit cleanup
     await client.query(`
       CREATE INDEX IF NOT EXISTS rate_limits_expires_idx 
       ON rate_limits(expires_at);
     `);
 
-    // ── Conversations ─────────────────────────────────────────────────────────
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS conversations (
-        id VARCHAR(255) PRIMARY KEY,
-        session_id VARCHAR(255),
-        user_id VARCHAR(255),
-        title VARCHAR(500),
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
+    // Ensure auth tables are present
+    try {
+      await initializeAuthTables();
+    } catch (err) {
+      console.warn('Could not initialize auth tables:', err);
+    }
 
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS conversations_user_idx 
-      ON conversations(user_id);
-    `);
-
-    // ── Messages ──────────────────────────────────────────────────────────────
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id VARCHAR(255) PRIMARY KEY,
-        conversation_id VARCHAR(255) REFERENCES conversations(id) ON DELETE CASCADE,
-        role VARCHAR(50) NOT NULL,
-        content TEXT NOT NULL,
-        voice_url TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS messages_conversation_idx 
-      ON messages(conversation_id);
-    `);
-
-    // ── Contacts ──────────────────────────────────────────────────────────────
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS contacts (
-        id VARCHAR(255) PRIMARY KEY,
-        email VARCHAR(255),
-        name VARCHAR(255),
-        phone VARCHAR(50),
-        company VARCHAR(255),
-        title VARCHAR(255),
-        message TEXT,
-        source VARCHAR(100) DEFAULT 'chat',
-        conversation_id VARCHAR(255),
-        status VARCHAR(50) DEFAULT 'new',
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS contacts_email_idx 
-      ON contacts(email);
-    `);
-
-    // ── Meetings ──────────────────────────────────────────────────────────────
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS meetings (
-        id VARCHAR(255) PRIMARY KEY,
-        contact_id VARCHAR(255),
-        scheduled_at TIMESTAMP,
-        duration_minutes INTEGER DEFAULT 30,
-        notes TEXT,
-        status VARCHAR(50) DEFAULT 'scheduled',
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS meetings_contact_idx 
-      ON meetings(contact_id);
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS meetings_scheduled_idx 
-      ON meetings(scheduled_at);
-    `);
-
-    // ── Analytics ─────────────────────────────────────────────────────────────
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS analytics (
-        id VARCHAR(255) PRIMARY KEY,
-        event_type VARCHAR(255),
-        conversation_id VARCHAR(255),
-        user_id VARCHAR(255),
-        event_data JSONB DEFAULT '{}',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS analytics_event_type_idx 
-      ON analytics(event_type);
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS analytics_user_idx 
-      ON analytics(user_id);
-    `);
+    // Ensure chat/application tables are present
+    try {
+      await initializeAppTables(client);
+    } catch (err) {
+      console.warn('Could not initialize app tables:', err);
+    }
 
     console.log("Database initialized successfully");
   } catch (error) {
@@ -213,6 +128,167 @@ export async function initializeDatabase() {
   } finally {
     client.release();
   }
+}
+
+// Create users and sessions tables if they don't exist
+export async function initializeAuthTables() {
+  const client = await getPool().connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (error) {
+    console.error('Auth table initialization error:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Create application tables (conversations, messages, contacts, meetings, analytics)
+async function initializeAppTables(client: PoolClient) {
+  // Conversations table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      user_id TEXT,
+      title TEXT,
+      status TEXT DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS conversations_session_idx ON conversations(session_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS conversations_user_idx ON conversations(user_id);
+  `);
+
+  // Messages table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      voice_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS messages_conversation_idx ON messages(conversation_id);
+  `);
+
+  // Contacts table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS contacts (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      name TEXT,
+      phone TEXT,
+      company TEXT,
+      title TEXT,
+      message TEXT,
+      source TEXT DEFAULT 'chat',
+      status TEXT DEFAULT 'new',
+      conversation_id TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS contacts_email_idx ON contacts(email);
+  `);
+
+  // Meetings table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS meetings (
+      id TEXT PRIMARY KEY,
+      contact_id TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+      scheduled_at TIMESTAMP NOT NULL,
+      duration_minutes INTEGER DEFAULT 30,
+      status TEXT DEFAULT 'scheduled',
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS meetings_contact_idx ON meetings(contact_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS meetings_scheduled_idx ON meetings(scheduled_at);
+  `);
+
+  // Analytics table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS analytics (
+      id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      conversation_id TEXT,
+      user_id TEXT,
+      event_data JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS analytics_event_type_idx ON analytics(event_type);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS analytics_created_idx ON analytics(created_at);
+  `);
+
+  // Phone calls table (for VAPI webhook integration)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS phone_calls (
+      id TEXT PRIMARY KEY,
+      call_id TEXT UNIQUE NOT NULL,
+      caller_number TEXT NOT NULL,
+      status TEXT DEFAULT 'in_progress',
+      started_at TIMESTAMP NOT NULL,
+      ended_at TIMESTAMP,
+      duration INTEGER,
+      recording_url TEXT,
+      transcript TEXT,
+      summary TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_call_id_idx ON phone_calls(call_id);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_status_idx ON phone_calls(status);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS phone_calls_created_idx ON phone_calls(created_at);
+  `);
 }
 
 /**
@@ -231,6 +307,7 @@ export async function upsertVectors(
 
   const client = await getPool().connect();
   try {
+    // Build the VALUES clause for bulk insert
     const values: any[] = [];
     const placeholders: string[] = [];
 
@@ -240,9 +317,10 @@ export async function upsertVectors(
         `($${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4})`
       );
       values.push(vec.id);
-      values.push(JSON.stringify(vec.vector));
+      values.push(JSON.stringify(vec.vector)); // Store as JSONB
+      // Extract content from metadata with type checking
       const content = vec.metadata?.content;
-      const contentStr = typeof content === "string" ? content : "";
+      const contentStr = typeof content === 'string' ? content : "";
       values.push(contentStr);
       values.push(JSON.stringify(vec.metadata || {}));
     });
@@ -268,6 +346,7 @@ export async function upsertVectors(
 
 /**
  * Query similar vectors using cosine similarity
+ * Works with JSONB arrays (fallback when pgvector is not available)
  */
 export async function querySimilarVectors(
   queryVector: number[],
@@ -279,6 +358,7 @@ export async function querySimilarVectors(
   try {
     const queryEmbed = JSON.stringify(queryVector);
 
+    // Calculate cosine similarity in SQL for JSONB arrays
     const result = await client.query(
       `
       WITH vector_similarity AS (
@@ -398,9 +478,7 @@ export async function storeIngestionMetadata(
 ) {
   const client = await getPool().connect();
   try {
-    const expiresAt = ttlSeconds
-      ? new Date(Date.now() + ttlSeconds * 1000)
-      : null;
+    const expiresAt = ttlSeconds ? new Date(Date.now() + ttlSeconds * 1000) : null;
 
     await client.query(
       `
@@ -422,6 +500,10 @@ export async function storeIngestionMetadata(
     client.release();
   }
 }
+
+/**
+ * getPool is already exported above
+ */
 
 /**
  * Close database connection
