@@ -39,7 +39,7 @@ export default function MessageList({
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 bg-gray-50"
+      className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 bg-transparent"
     >
       <div className="space-y-5">
         {messages.length === 0 ? (
@@ -91,10 +91,10 @@ export default function MessageList({
               >
                 <div
                   className={`
-                    px-5 py-3 rounded-full transition-all duration-200
+                    px-4 py-3 rounded-2xl transition-all duration-200 shadow-sm
                     ${msg.role === "user"
-                      ? "bg-gray-200 text-gray-800"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-[#4361ee] text-white rounded-tr-sm"
+                      : "bg-[#2d2d44] text-white rounded-tl-sm"
                     }
                   `}
                 >
@@ -102,7 +102,7 @@ export default function MessageList({
                 </div>
                 <span
                   className={`
-                    text-[11px] text-gray-400 mt-1.5 block
+                    text-[11px] text-gray-500 mt-1.5 block
                     ${msg.role === "user" ? "text-right mr-1" : "text-left ml-1"}
                   `}
                   suppressHydrationWarning

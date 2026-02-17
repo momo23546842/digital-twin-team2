@@ -12,7 +12,7 @@ interface ChatInputProps {
 export default function ChatInput({
   onSubmit,
   isLoading = false,
-  placeholder = "Ask your digital twin anything...",
+  placeholder = "Type a message...",
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -30,10 +30,10 @@ export default function ChatInput({
       <div 
         className={`
           relative flex items-center gap-4 
-          bg-white rounded-2xl border-2 transition-all duration-300 shadow-sm
+          bg-[#0f1724] rounded-2xl border-2 transition-all duration-300 shadow-sm
           ${isFocused 
-            ? 'border-violet-400 shadow-lg shadow-violet-100' 
-            : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+            ? 'border-[#4361ee] shadow-lg shadow-[#4361ee]/10' 
+            : 'border-transparent'
           }
         `}
       >
@@ -51,13 +51,13 @@ export default function ChatInput({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
           disabled={isLoading}
-          className="flex-1 bg-transparent py-5 text-lg text-gray-800 placeholder-gray-400 focus:outline-none disabled:cursor-not-allowed"
+          className="flex-1 bg-transparent py-5 text-lg text-white placeholder-gray-400 focus:outline-none disabled:cursor-not-allowed"
         />
 
         {/* Voice button (decorative) */}
         <button
           type="button"
-          className="p-3 text-gray-400 hover:text-violet-500 hover:bg-violet-50 rounded-xl transition-all"
+          className="p-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
           aria-label="Voice input"
         >
           <Mic className="w-6 h-6" />
@@ -68,14 +68,14 @@ export default function ChatInput({
           type="submit"
           disabled={isLoading || !input.trim()}
           className={`
-            mr-3 p-4 rounded-xl font-medium flex items-center gap-2 transition-all duration-300
+            mr-3 p-3 rounded-full font-medium flex items-center gap-2 transition-all duration-300
             ${input.trim() && !isLoading
-              ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-200 hover:shadow-xl hover:shadow-violet-300 hover:scale-105 active:scale-95'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              ? 'bg-[#4361ee] text-white shadow-md hover:scale-105 active:scale-95'
+              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
             }
           `}
         >
-          <Send className="w-6 h-6" />
+          <Send className="w-5 h-5" />
         </button>
       </div>
 

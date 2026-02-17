@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import ChatPane from '@/components/ChatPane';
+import ChatPaneWithPhone from "@/components/ChatPaneWithPhone";
 
 export default function ChatPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,5 +27,5 @@ export default function ChatPage() {
     return null;
   }
 
-  return <ChatPane />;
+  return <ChatPaneWithPhone />;
 }

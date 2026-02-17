@@ -1,0 +1,23 @@
+{
+  "name": "Prabhav Shrestha",
+  "title": "Front-End Developer",
+  "contact": {
+    "location": "Sydney, NSW/Australia",
+    "phone": "0470490977",
+    "email": "prabhavshrestha2005@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/prabhav-shrestha-9526b5321/",
+    "github": "https://github.com/PrabhavSrst"
+  },
+  "professional_summary": "Very skilled and passionate front-end developer with a strong foundation in web development technologies. Proficient in HTML5, CSS3, JavaScript (ES6+), and TypeScript, with experience in popular frameworks and libraries such as React.js, Redux, Tailwind CSS, Bootstrap, and Next.js. Adept at creating responsive and user-friendly interfaces while ensuring cross-browser compatibility and accessibility. Familiar with version control systems like Git and GitHub, as well as build tools such as Vite and Webpack. Committed to continuous learning and staying updated with the latest industry trends to deliver high-quality web applications.",
+  "technical_skills": {
+    "languages": ["HTML5", "CSS3", "JavaScript (ES6+)", "TypeScript"],
+    "frameworks_libraries": ["React.js", "Redux", "Tailwind CSS", "Bootstrap", "Next.js (Basics)"],
+    "tools_version_control": ["Git", "GitHub", "Vite", "Webpack", "npm/yarn"],
+    "design_ui": ["Figma", "Adobe XD", "Responsive Design", "Accessibility (WCAG)"],
+    "backend_familiarity": ["Node.js", "RESTful APIs", "Firebase"]
+  },
+  "professional_experience": ["Worked for 3 years in an IT firm"],
+  "education": ["Bachelor's degree in Computer Science from Victoria University, Sydney"],
+  "key_projects": ["Digital Twin 2 project"],
+  "certifications": ["Certified by Ausbiz"]
+}
