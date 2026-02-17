@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.12.2",
   "scripts": {
     "dev": "cd digital-twin && pnpm install && pnpm run dev",
-    "build": "cd digital-twin && pnpm install && pnpm run build",
+    "build": "cd digital-twin && pnpm install --no-frozen-lockfile && pnpm run build",
     "start": "cd digital-twin && pnpm run start"
   },
   "dependencies": {
