@@ -282,23 +282,32 @@ export default function PhoneDialer() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-full shadow-lg shadow-green-200 hover:shadow-xl hover:shadow-green-300 hover:scale-105 active:scale-95 transition-all duration-300"
+        className="inline-flex items-center gap-2 px-3 py-2 bg-[#25D366] text-white rounded-full shadow-lg hover:scale-105 transform transition duration-150 ring-2 ring-[#25D366]/30"
         aria-label="Open phone dialer"
       >
-        <Phone className="w-5 h-5" />
-        <span className="hidden sm:inline">Call AI Twin</span>
+        <Phone className="w-6 h-6" />
+        <span className="hidden sm:inline font-semibold">Call</span>
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-80 sm:w-96">
-      <div className={`rounded-2xl border-2 shadow-2xl overflow-hidden transition-all duration-300 ${getStateBgColor()}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-violet-600 to-purple-700">
-          <div className="flex items-center gap-2">
-            <PhoneCall className="w-5 h-5 text-white" />
-            <span className="text-white font-semibold text-sm">AI Phone Call</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70" onClick={() => {
+        if (callState === 'idle' || callState === 'completed' || callState === 'failed') {
+          setIsOpen(false);
+          handleReset();
+        }
+      }} />
+
+      {/* Centered modal */}
+      <div className={`relative w-full max-w-md mx-4 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${getStateBgColor()}`}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-[#0b1220]">
+          <div className="flex items-center gap-3">
+            <PhoneCall className="w-6 h-6 text-white" />
+            <span className="text-white font-semibold">AI Phone Call</span>
           </div>
           <button
             onClick={() => {
@@ -309,206 +318,95 @@ export default function PhoneDialer() {
             }}
             className="text-white/70 hover:text-white transition-colors"
             disabled={callState === "dialing" || callState === "ringing" || callState === "in_progress"}
+            aria-label="Close call modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="px-5 pt-4">
-          <div className="flex items-center justify-between rounded-xl border bg-white px-3 py-2">
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-800">Call Mode</span>
-              <span className="text-xs text-gray-500">
-                {webCallMode ? "Web Call (hear voice in browser)" : "Phone Number Call (PSTN)"}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (callState === "dialing" || callState === "ringing" || callState === "in_progress") return;
-                setWebCallMode((p) => !p);
-                setError(null);
-              }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                webCallMode ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700"
-              }`}
-              aria-label="Toggle call mode"
-            >
-              {webCallMode ? "WEB" : "PSTN"}
-            </button>
-          </div>
-
-          {/* Mic status (web mode) */}
-          {webCallMode && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-              {micReady ? <Mic className="w-4 h-4 text-emerald-600" /> : <MicOff className="w-4 h-4 text-gray-400" />}
-              <span>
-                {micReady
-                  ? "Microphone ready"
-                  : "Microphone permission not granted yet (you’ll be asked on call start)"}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Body */}
-        <div className="p-5">
-          {/* Idle State */}
-          {callState === "idle" && (
-            <div className="space-y-4">
-              {/* PSTN input only */}
-              {!webCallMode && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => handlePhoneInput(e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                      className="w-full pl-11 pr-4 py-3 text-lg font-mono border-2 border-gray-200 rounded-xl focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all bg-white"
-                    />
-                  </div>
-                  {error && (
-                    <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {error}
-                    </p>
-                  )}
-                  <p className="mt-1.5 text-xs text-gray-400">Enter number in E.164 format (e.g. +14155551234)</p>
-                </div>
-              )}
-
-              {/* Web mode hint */}
-              {webCallMode && (
-                <div className="rounded-xl border bg-white p-3">
-                  <p className="text-sm font-semibold text-gray-800">Web Call</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Click “Start Web Call”, allow microphone, and you’ll hear Momoyo’s voice in the browser.
-                  </p>
-                  {error && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {error}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <button
-                onClick={handleCall}
-                disabled={!webCallMode && (!phoneNumber || phoneNumber.length < 8)}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:scale-100"
-              >
-                <Phone className="w-5 h-5" />
-                {webCallMode ? "Start Web Call" : "Call with AI Twin"}
-              </button>
-            </div>
-          )}
-
-          {/* Dialing */}
-          {callState === "dialing" && (
-            <div className="text-center py-4 space-y-3">
-              <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto" />
-              <p className="text-lg font-semibold text-gray-800">{webCallMode ? "Starting Web Call..." : "Connecting..."}</p>
-              {!webCallMode && (
-                <p className="text-sm text-gray-500 font-mono">{formatDisplayNumber(phoneNumber)}</p>
-              )}
-              {webCallMode && (
-                <p className="text-xs text-gray-500">Please allow microphone access in the browser prompt.</p>
-              )}
-            </div>
-          )}
-
-          {/* Ringing (PSTN only) */}
-          {callState === "ringing" && !webCallMode && (
-            <div className="text-center py-4 space-y-3">
-              <div className="relative mx-auto w-16 h-16">
-                <div className="absolute inset-0 bg-amber-400/30 rounded-full animate-ping" />
-                <div className="relative flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full">
-                  <PhoneCall className="w-8 h-8 text-amber-600 animate-pulse" />
-                </div>
+        {/* Modal body */}
+        <div className="p-6 bg-transparent">
+          {/* Idle / Start Call UI */}
+          {callState === 'idle' && (
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-md">
+                <User className="w-16 h-16 text-[#0b1220]" />
               </div>
-              <p className="text-lg font-semibold text-gray-800">Ringing...</p>
-              <p className="text-sm text-gray-500 font-mono">{formatDisplayNumber(phoneNumber)}</p>
+              <div>
+                <h3 className="text-xl font-semibold text-white">Digital Twin</h3>
+                <p className="text-sm text-gray-300">Calling...</p>
+              </div>
+
+              <div className="w-full">
+                <button
+                  onClick={handleCall}
+                  className="w-full py-3 bg-[#25D366] text-white rounded-full font-semibold shadow-md hover:brightness-95 transition"
+                >
+                  Start Web Call
+                </button>
+              </div>
+
               <button
-                onClick={handleHangUp}
-                className="mt-2 flex items-center justify-center gap-2 mx-auto px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                onClick={() => { setIsOpen(false); handleReset(); }}
+                className="text-sm text-gray-300"
               >
-                <PhoneOff className="w-4 h-4" />
                 Cancel
               </button>
             </div>
           )}
 
-          {/* In Progress */}
-          {callState === "in_progress" && (
-            <div className="text-center py-4 space-y-3">
-              <div className="relative mx-auto w-16 h-16">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-pulse" />
-                <div className="relative flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-                  <User className="w-8 h-8 text-green-600" />
+          {/* Dialing / In Progress */}
+          {callState === 'dialing' && (
+            <div className="flex flex-col items-center gap-4 text-center">
+              <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
+              <h3 className="text-lg font-semibold text-white">{webCallMode ? 'Starting Web Call...' : 'Connecting...'}</h3>
+            </div>
+          )}
+
+          {callState === 'in_progress' && (
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-md">
+                <User className="w-16 h-16 text-[#0b1220]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white">Digital Twin</h3>
+                <div className="mt-2 text-sm text-gray-300 flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-mono">{formatDuration(callDuration)}</span>
                 </div>
               </div>
 
-              <p className="text-lg font-semibold text-green-800">
-                {webCallMode ? "Web Call in Progress" : "Call in Progress"}
-              </p>
+              <div className="flex items-center gap-6">
+                <button className="p-3 rounded-full bg-white/5 text-white">
+                  <Mic className="w-5 h-5" />
+                </button>
 
-              <div className="flex items-center justify-center gap-2 text-green-700">
-                <Clock className="w-4 h-4" />
-                <span className="font-mono text-lg">{formatDuration(callDuration)}</span>
+                <button
+                  onClick={handleHangUp}
+                  className="p-4 rounded-full bg-red-600 text-white shadow-md"
+                >
+                  <PhoneOff className="w-5 h-5" />
+                </button>
               </div>
-
-              {!webCallMode && (
-                <p className="text-sm text-gray-500 font-mono">{formatDisplayNumber(phoneNumber)}</p>
-              )}
-
-              <p className="text-xs text-gray-400">
-                {webCallMode ? "You should hear the assistant in your browser audio." : "AI Twin is speaking on the call"}
-              </p>
-
-              <button
-                onClick={handleHangUp}
-                className="mt-2 flex items-center justify-center gap-2 mx-auto px-6 py-2.5 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 active:scale-95 transition-all"
-              >
-                <PhoneOff className="w-4 h-4" />
-                End Call
-              </button>
             </div>
           )}
 
-          {/* Completed */}
-          {callState === "completed" && (
-            <div className="text-center py-4 space-y-3">
+          {/* Completed / Failed */}
+          {callState === 'completed' && (
+            <div className="flex flex-col items-center gap-4 text-center">
               <CheckCircle2 className="w-12 h-12 text-blue-500 mx-auto" />
-              <p className="text-lg font-semibold text-gray-800">Call Ended</p>
-              {callDuration > 0 && <p className="text-sm text-gray-500">Duration: {formatDuration(callDuration)}</p>}
-              <button
-                onClick={handleReset}
-                className="mt-2 flex items-center justify-center gap-2 mx-auto px-6 py-2 bg-violet-500 text-white rounded-full hover:bg-violet-600 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                New Call
-              </button>
+              <h3 className="text-lg font-semibold text-white">Call Ended</h3>
+              <p className="text-sm text-gray-300">Duration: {formatDuration(callDuration)}</p>
+              <button onClick={() => { setIsOpen(false); handleReset(); }} className="py-2 px-4 bg-[#4361ee] text-white rounded-full">Close</button>
             </div>
           )}
 
-          {/* Failed */}
-          {callState === "failed" && (
-            <div className="text-center py-4 space-y-3">
+          {callState === 'failed' && (
+            <div className="flex flex-col items-center gap-4 text-center">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-              <p className="text-lg font-semibold text-gray-800">Call Failed</p>
-              {error && <p className="text-sm text-red-600">{error}</p>}
-              <button
-                onClick={handleReset}
-                className="mt-2 flex items-center justify-center gap-2 mx-auto px-6 py-2 bg-violet-500 text-white rounded-full hover:bg-violet-600 transition-colors"
-              >
-                Try Again
-              </button>
+              <h3 className="text-lg font-semibold text-white">Call Failed</h3>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <button onClick={handleReset} className="py-2 px-4 bg-[#4361ee] text-white rounded-full">Try Again</button>
             </div>
           )}
         </div>

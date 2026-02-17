@@ -3,9 +3,9 @@
 import ChatInput from "@/components/ChatInput";
 import DocumentUpload from "@/components/DocumentUpload";
 import MessageList from "@/components/MessageList";
-import PhoneDialer from "@/components/PhoneDialer";
 import type { Message } from "@/types";
-import { Bot, Sparkles } from "lucide-react";
+import PhoneDialer from "@/components/PhoneDialer";
+import { Bot } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /**
@@ -75,54 +75,53 @@ export default function ChatPaneWithPhone() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen relative overflow-hidden bg-white">
+    <div className="flex flex-col min-h-screen relative overflow-hidden bg-[#0f0f1a]">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 bg-white border-b border-gray-200 shadow-sm">
+      {/* Header (fixed) */}
+      <header className="fixed top-0 left-0 right-0 z-30 bg-[#16213e] text-white border-b border-[#0f1724]/40">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
-                  <Bot className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden">
+                  <Bot className="w-6 h-6 text-[#075E54]" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-[#075E54] animate-pulse" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">
+                <h1 className="text-xl font-semibold flex items-center gap-2">
                   Digital Twin
-                  <Sparkles className="w-5 h-5 text-violet-500" />
                 </h1>
-                <p className="text-sm text-gray-500">Powered by Groq AI with Vector Search</p>
+                <p className="text-sm text-white/80">Powered by Groq AI</p>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-100">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm text-violet-600">Online</span>
+            <div className="flex items-center gap-2">
+              <PhoneDialer />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main chat container */}
-      <div className="flex-1 flex flex-col relative z-10 p-4 sm:p-6 overflow-hidden">
-        <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col bg-gray-50 rounded-3xl border border-gray-200 shadow-lg overflow-hidden">
-          <MessageList messages={messages} isLoading={isLoading} />
+      {/* Main chat container (pad for fixed header and input) */}
+      <div className="flex-1 flex flex-col relative z-10 pt-20 pb-24 p-4 sm:p-6 overflow-hidden">
+        <div className="max-w-4xl mx-auto w-full h-full flex flex-col bg-white rounded-3xl border border-[#0b1220] shadow-lg overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <MessageList messages={messages} isLoading={isLoading} />
+          </div>
 
-          <div className="bg-white border-t border-gray-100">
+          <div className="w-full bg-white border-t border-gray-100">
             <DocumentUpload isLoading={isLoading} />
             <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
           </div>
         </div>
       </div>
 
-      {/* Phone Dialer — floating bottom-right */}
-      <PhoneDialer />
+      {/* Phone Dialer panel will render when opened via the header button */}
     </div>
   );
 }
