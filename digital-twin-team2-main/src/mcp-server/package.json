@@ -1,0 +1,20 @@
+{
+  "name": "digital-twin-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Digital Twin",
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5"
+  }
+}

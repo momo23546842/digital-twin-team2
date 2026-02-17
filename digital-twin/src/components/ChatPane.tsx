@@ -7,8 +7,10 @@ import type { Message } from "@/types";
 import { Bot } from "lucide-react";
 import PhoneDialer from "@/components/PhoneDialer";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function ChatPane() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -22,12 +24,10 @@ export default function ChatPane() {
   const [sessionId, setSessionId] = useState<string>("");
 
   useEffect(() => {
-    // Initialize session ID
     setSessionId(`session-${Date.now()}`);
   }, []);
 
   const handleSendMessage = async (content: string) => {
-    // Add user message
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
       role: "user",
@@ -39,42 +39,36 @@ export default function ChatPane() {
     setIsLoading(true);
 
     try {
-      // Call chat API
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": "user-123", // Replace with actual user ID
+          "x-user-id": user?.id || "anonymous",
         },
         body: JSON.stringify({
-          messages: [
-            ...messages,
-            { role: "user", content },
-          ],
+          messages: [...messages, { role: "user", content }],
           sessionId,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        console.error("API Error Response:", errorData);
         throw new Error(`API error: ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();
-
-      // Add assistant message
       setMessages((prev) => [...prev, data.message]);
     } catch (error) {
       console.error("Error sending message:", error);
-      const errorMessage: Message = {
-        id: `msg-${Date.now()}`,
-        role: "assistant",
-        content:
-          "Sorry, there was an error processing your request. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-${Date.now()}`,
+          role: "assistant",
+          content: "Sorry, there was an error processing your request. Please try again.",
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }

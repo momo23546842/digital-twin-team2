@@ -23,59 +23,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // ✅ start true to prevent flash
   const router = useRouter();
 
-  // Verify session on mount using the verify endpoint
   useEffect(() => {
     const verifySession = async () => {
+      // First: try to restore from localStorage immediately (no flicker)
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
+
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setToken(storedToken);
+          // Sync cookie so middleware can see it
+          document.cookie = `auth_token=${storedToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        } catch {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+        }
+      }
+
+      // Then: verify with server in background
       try {
         const response = await fetch('/api/auth/verify', {
           method: 'GET',
-          credentials: 'include', // Include cookies in the request
+          credentials: 'include',
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Session is valid, but we need user info
-          // Get user info from localStorage as fallback, or from a user endpoint
-          const storedUser = localStorage.getItem('auth_user');
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setToken('authenticated'); // Token exists server-side via cookie
-          } else {
-            // Cookie is valid but no user in localStorage
-            // Set a placeholder user from the verify response
-            setUser({ id: data.userId, email: '', name: 'User' });
-            setToken('authenticated');
-          }
-        } else {
-          // Session invalid or expired - clear localStorage
-          // But do NOT redirect here - middleware handles route protection
+        if (!response.ok) {
+          // Server says invalid — clear everything
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
+          document.cookie = 'auth_token=; path=/; max-age=0';
           setUser(null);
           setToken(null);
         }
-      } catch (error) {
-        console.error('Error verifying session:', error);
-        // On network/API error, check if we have cached user data
-        // This prevents auth failures due to temporary API issues
-        const storedUser = localStorage.getItem('auth_user');
-        if (storedUser) {
-          try {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setToken('authenticated');
-          } catch {
-            setUser(null);
-            setToken(null);
-          }
-        } else {
-          setUser(null);
-          setToken(null);
-        }
+      } catch {
+        // Network error — keep local state, don't log out
       } finally {
         setIsLoading(false);
       }
@@ -87,9 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setAuthData = (newUser: User, newToken: string) => {
     setUser(newUser);
     setToken(newToken);
-    // Store user data for reload persistence
+    localStorage.setItem('auth_token', newToken);
     localStorage.setItem('auth_user', JSON.stringify(newUser));
-    // Don't store token in localStorage - rely on HTTP-only cookie
+    // ✅ Sync cookie for middleware
+    document.cookie = `auth_token=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
   };
 
   const logout = async () => {
@@ -98,12 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch {
+      // Continue logout even if request fails
     }
 
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    document.cookie = 'auth_token=; path=/; max-age=0';
     setToken(null);
     setUser(null);
     router.push('/login');

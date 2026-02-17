@@ -5,15 +5,10 @@ export function proxy(request: NextRequest) {
 
   // List of protected routes
   const protectedRoutes = ['/chat', '/dashboard', '/admin'];
-  const authRoutes = ['/login', '/signup'];
   const pathname = request.nextUrl.pathname;
 
-  // Redirect authenticated users away from auth pages
-  if (authToken && authRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL('/chat', request.url));
-  }
-
-  // Redirect unauthenticated users away from protected pages
+  // Only protect routes that require auth
+  // Don't redirect from auth pages — let client handle that to avoid stale cookie issues
   if (!authToken && protectedRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
