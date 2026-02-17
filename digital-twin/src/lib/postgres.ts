@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Pool, PoolClient } from "pg";
 
 // Create a connection pool (will be initialized when DATABASE_URL is available)
