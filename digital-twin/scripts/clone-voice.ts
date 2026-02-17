@@ -1,70 +1,50 @@
-#!/usr/bin/env npx tsx
 /**
- * Voice Cloning Script — ElevenLabs
+ * Voice Cloning Script
  *
- * One-time script to upload audio samples and create a cloned voice.
+ * Clones your voice using ElevenLabs Instant Voice Cloning (IVC).
  *
  * Usage:
- *   npx tsx scripts/clone-voice.ts --files sample1.mp3 sample2.mp3 --name "My Voice"
+ *   npx tsx scripts/clone-voice.ts --files recording1.mp3 recording2.mp3 --name "My Voice"
  *
- * Options:
- *   --files   One or more audio file paths (mp3, wav, m4a)
- *   --name    Display name for the cloned voice
- *
- * Requires:
- *   ELEVENLABS_API_KEY in .env.local (or environment)
- *
- * On success, prints the voice ID to save in .env.local as ELEVENLABS_VOICE_ID.
+ * After running, copy the output voice ID into your .env.local:
+ *   ELEVENLABS_VOICE_ID=<voice_id>
  */
 
-import { config } from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { createReadStream, existsSync, statSync } from "fs";
+import path from "path";
+import dotenv from "dotenv";
 
-// Load .env.local
-config({ path: path.resolve(process.cwd(), '.env.local') });
+// Load env vars from .env.local (same as Next.js)
+dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 // ---------------------------------------------------------------------------
-// Argument parsing
+// Parse CLI arguments
 // ---------------------------------------------------------------------------
-
 function parseArgs(): { files: string[]; name: string } {
   const args = process.argv.slice(2);
   const files: string[] = [];
-  let name = '';
-  let mode: 'none' | 'files' | 'name' = 'none';
+  let name = "My Cloned Voice";
 
-  for (const arg of args) {
-    if (arg === '--files') {
-      mode = 'files';
-      continue;
-    }
-    if (arg === '--name') {
-      mode = 'name';
-      continue;
-    }
-    if (arg.startsWith('--')) {
-      mode = 'none';
-      continue;
-    }
-
-    switch (mode) {
-      case 'files':
-        files.push(arg);
-        break;
-      case 'name':
-        name = name ? `${name} ${arg}` : arg;
-        break;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--files") {
+      i++;
+      while (i < args.length && !args[i].startsWith("--")) {
+        files.push(args[i]);
+        i++;
+      }
+      i--; // compensate for the for-loop increment
+    } else if (args[i] === "--name") {
+      i++;
+      name = args[i] ?? name;
     }
   }
 
   if (files.length === 0) {
-    console.error('Error: No audio files specified. Use --files path1.mp3 path2.mp3');
-    process.exit(1);
-  }
-
-  if (!name) {
-    console.error('Error: No voice name specified. Use --name "My Voice"');
+    console.error("❌ No audio files provided.");
+    console.error("");
+    console.error("Usage:");
+    console.error('  npx tsx scripts/clone-voice.ts --files path1.mp3 path2.mp3 --name "My Voice"');
     process.exit(1);
   }
 
@@ -72,112 +52,79 @@ function parseArgs(): { files: string[]; name: string } {
 }
 
 // ---------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------
-
-function validateFiles(filePaths: string[]): void {
-  const supported = ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.webm'];
-
-  for (const filePath of filePaths) {
-    const resolved = path.resolve(filePath);
-
-    if (!fs.existsSync(resolved)) {
-      console.error(`Error: File not found — ${resolved}`);
-      process.exit(1);
-    }
-
-    const ext = path.extname(filePath).toLowerCase();
-    if (!supported.includes(ext)) {
-      console.error(
-        `Error: Unsupported format "${ext}" for ${filePath}. Supported: ${supported.join(', ')}`,
-      );
-      process.exit(1);
-    }
-
-    const stats = fs.statSync(resolved);
-    const sizeMB = stats.size / (1024 * 1024);
-    console.log(`  ✓ ${path.basename(filePath)} (${sizeMB.toFixed(1)} MB)`);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// ElevenLabs API
-// ---------------------------------------------------------------------------
-
-async function cloneVoice(
-  apiKey: string,
-  name: string,
-  filePaths: string[],
-): Promise<string> {
-  const form = new FormData();
-  form.append('name', name);
-  form.append('description', `Cloned voice "${name}" created via clone-voice script`);
-
-  for (const filePath of filePaths) {
-    const resolved = path.resolve(filePath);
-    const buffer = fs.readFileSync(resolved);
-    const blob = new Blob([buffer]);
-    form.append('files', blob, path.basename(filePath));
-  }
-
-  console.log('\n⏳ Uploading to ElevenLabs...');
-
-  const res = await fetch('https://api.elevenlabs.io/v1/voices/add', {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-    },
-    body: form,
-  });
-
-  if (!res.ok) {
-    const errorBody = await res.text();
-    throw new Error(
-      `ElevenLabs API error (${res.status}): ${errorBody}`,
-    );
-  }
-
-  const data = (await res.json()) as { voice_id: string };
-  return data.voice_id;
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-
 async function main() {
-  console.log('🎙️  ElevenLabs Voice Cloning Script\n');
+  const { files, name } = parseArgs();
 
-  // Check API key
-  const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
+  console.log("🎙️  ElevenLabs Voice Cloning");
+  console.log("─".repeat(40));
+  console.log(`  Name:  ${name}`);
+  console.log(`  Files: ${files.length}`);
+  console.log("");
+
+  // Validate API key
+  const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
-    console.error(
-      'Error: ELEVENLABS_API_KEY is not set.\n' +
-        'Add it to .env.local or export it in your shell.',
-    );
+    console.error("❌ ELEVENLABS_API_KEY not found in .env.local");
     process.exit(1);
   }
-  console.log('✓ API key found');
+  console.log("✅ API key loaded");
 
-  // Parse & validate
-  const { files, name } = parseArgs();
-  console.log(`\nVoice name : ${name}`);
-  console.log(`Audio files: ${files.length}\n`);
-  validateFiles(files);
+  // Validate files exist
+  for (const filePath of files) {
+    const resolved = path.resolve(filePath);
+    if (!existsSync(resolved)) {
+      console.error(`❌ File not found: ${resolved}`);
+      process.exit(1);
+    }
+    const size = statSync(resolved).size;
+    const sizeMb = (size / 1024 / 1024).toFixed(2);
+    console.log(`✅ ${path.basename(resolved)} (${sizeMb} MB)`);
+  }
+  console.log("");
 
-  // Upload
-  const voiceId = await cloneVoice(apiKey, name, files);
+  // Create client
+  const client = new ElevenLabsClient({ apiKey });
 
-  // Done
-  console.log('\n✅ Voice cloned successfully!\n');
-  console.log(`   Voice ID : ${voiceId}`);
-  console.log(`   Name     : ${name}`);
-  console.log('\n👉 Add the following to your .env.local:\n');
-  console.log(`   ELEVENLABS_VOICE_ID=${voiceId}\n`);
+  // Upload and clone
+  console.log("⏳ Uploading audio samples and cloning voice...");
+
+  try {
+    const streams = files.map((f) => createReadStream(path.resolve(f)));
+
+    const response = await client.voices.ivc.create({
+      name,
+      files: streams,
+      description: `Voice clone created on ${new Date().toISOString().split("T")[0]}`,
+      removeBackgroundNoise: true,
+    });
+
+    console.log("");
+    console.log("─".repeat(40));
+    console.log("🎉 Voice cloned successfully!");
+    console.log("");
+    console.log(`  Voice ID: ${response.voiceId}`);
+    console.log(`  Requires verification: ${response.requiresVerification}`);
+    console.log("");
+    console.log("📋 Add this to your .env.local:");
+    console.log("");
+    console.log(`  ELEVENLABS_VOICE_ID=${response.voiceId}`);
+    console.log("");
+  } catch (error: any) {
+    console.error("");
+    console.error("❌ Voice cloning failed:");
+    console.error(error?.message ?? error);
+
+    if (error?.statusCode) {
+      console.error(`  Status: ${error.statusCode}`);
+    }
+    if (error?.body) {
+      console.error("  Details:", JSON.stringify(error.body, null, 2));
+    }
+
+    process.exit(1);
+  }
 }
 
-main().catch((err) => {
-  console.error('\n❌ Voice cloning failed:\n');
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+main();
