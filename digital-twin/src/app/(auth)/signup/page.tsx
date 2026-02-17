@@ -45,24 +45,24 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md px-4 sm:px-0">
         {/* Card Container */}
-        <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-12 border border-gray-100">
+        <div className="bg-[#071022] rounded-3xl shadow-2xl p-6 sm:p-10 border border-white/5">
           {/* Header Section */}
           <div className="text-center mb-12">
             {/* Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl shadow-lg mb-8 ring-2 ring-purple-100">
-              <span className="text-white font-black text-3xl">✦</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white/5 rounded-2xl shadow-lg mb-6 sm:mb-8">
+              <span className="text-white font-black text-2xl sm:text-3xl">✦</span>
             </div>
             
             {/* Title */}
-            <h2 className="text-5xl sm:text-6xl font-black text-gray-900 mb-4 leading-tight">
-              Get Started
+            <h2 className="text-2xl sm:text-4xl font-black text-white mb-3 leading-tight">
+              Create Account
             </h2>
             
             {/* Subtitle */}
-            <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
+            <p className="text-gray-300 text-sm sm:text-base font-medium leading-relaxed">
               Create your Digital Twin account today
             </p>
           </div>
@@ -80,7 +80,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               {/* Full Name Field */}
               <div>
-                <label htmlFor="name" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
+                  <label htmlFor="name" className="block text-sm sm:text-xs font-black text-gray-200 mb-2 sm:mb-3 tracking-wider uppercase">
                   Full name
                 </label>
                 <input
@@ -89,7 +89,7 @@ export default function SignupPage() {
                   type="text"
                   autoComplete="name"
                   required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
+                    className="w-full px-4 py-3 sm:px-5 sm:py-4 border-2 border-white/6 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-800/10 focus:outline-none transition-all duration-200 bg-[#071022] text-white placeholder-gray-400 text-sm sm:text-base"
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -98,7 +98,7 @@ export default function SignupPage() {
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email-address" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
+                <label htmlFor="email-address" className="block text-xs font-black text-gray-200 mb-3 tracking-wider uppercase">
                   Email address
                 </label>
                 <input
@@ -107,7 +107,7 @@ export default function SignupPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
+                  className="w-full px-5 py-4 border-2 border-white/6 rounded-2xl bg-[#071022] focus:border-emerald-500 focus:ring-4 focus:ring-emerald-800/10 focus:outline-none transition-all duration-200 text-white placeholder-gray-400"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -116,7 +116,7 @@ export default function SignupPage() {
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-xs font-black text-gray-900 mb-3 tracking-wider uppercase">
+                <label htmlFor="password" className="block text-xs font-black text-gray-200 mb-3 tracking-wider uppercase">
                   Password
                 </label>
                 <input
@@ -125,7 +125,7 @@ export default function SignupPage() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white hover:border-gray-300 text-base font-medium placeholder-gray-400"
+                  className="w-full px-5 py-4 border-2 border-white/6 rounded-2xl bg-[#071022] focus:border-emerald-500 focus:ring-4 focus:ring-emerald-800/10 focus:outline-none transition-all duration-200 text-white placeholder-gray-400"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -137,7 +137,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-5 px-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-black rounded-2xl hover:from-purple-700 hover:to-purple-800 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base tracking-tight shadow-lg hover:shadow-2xl mt-8"
+              className="w-full py-5 px-6 bg-[#25D366] text-[#061b13] font-black rounded-2xl hover:brightness-95 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base tracking-tight shadow-lg mt-8"
             >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </button>

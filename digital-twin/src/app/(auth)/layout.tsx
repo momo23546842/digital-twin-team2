@@ -1,25 +1,13 @@
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
-import CallWidgetGate from '@/components/CallWidgetGate' 
+import '../globals.css'
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-export const metadata: Metadata = {
-  title: 'Digital Twin - Your AI Career Assistant',
-  description: 'Chat with an AI assistant that knows everything about you. Ask questions, explore experience, and connect.',
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
-        {children}
-        <CallWidgetGate /> {}
-        <Analytics />
-      </body>
-    </html>
+    <div className={`${inter.variable} font-sans antialiased min-h-screen bg-[#0f0f1a]`}>
+      {children}
+    </div>
   )
 }
 

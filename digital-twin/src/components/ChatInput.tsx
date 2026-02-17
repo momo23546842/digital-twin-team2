@@ -12,7 +12,7 @@ interface ChatInputProps {
 export default function ChatInput({
   onSubmit,
   isLoading = false,
-  placeholder = "Ask your digital twin anything...",
+  placeholder = "Type a message...",
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
