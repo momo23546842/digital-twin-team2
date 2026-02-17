@@ -24,7 +24,7 @@ export async function getRecentCalls(limit: number = 20): Promise<CallRecord[]> 
       return [];
     }
     
-    const calls = await prisma.phoneCall.findMany({
+    const calls = await prisma!.phoneCall.findMany({
       orderBy: { createdAt: "desc" },
       take: limit,
       select: {
@@ -44,7 +44,7 @@ export async function getRecentCalls(limit: number = 20): Promise<CallRecord[]> 
     });
 
     // Serialise Date objects for client components
-    return calls.map((call) => ({
+    return calls.map((call: any) => ({
       ...call,
       startedAt: call.startedAt?.toISOString() ?? new Date().toISOString(),
       endedAt: call.endedAt?.toISOString() ?? null,
