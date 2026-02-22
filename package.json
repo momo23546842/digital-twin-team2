@@ -8,7 +8,9 @@
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:upload": "tsx scripts/upload-resume-data.ts",
+    "db:upload:py": "python3 scripts/upload-resume-data.py"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.36.0",
