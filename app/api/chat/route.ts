@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import pg from 'pg';
+import { generateText, stepCountIs, tool } from 'ai';
+import { groq } from '@ai-sdk/groq';
+import { z } from 'zod';
 
 const { Pool } = pg;
 
@@ -16,107 +19,242 @@ const pool = new Pool({
   },
 });
 
-/**
- * Fetch candidate profile data from database to use as context
- */
-async function getCandidateContext(): Promise<string> {
+async function withClient<T>(work: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
-  
+
   try {
-    // Fetch complete profile with skills, experience, and education
-    const profileQuery = `
-      SELECT 
-        cp.first_name,
-        cp.last_name,
-        cp.email,
-        cp.phone,
-        cp.location,
-        cp.career_objective,
-        cp.professional_summary,
-        cp.current_position,
-        cp.years_of_experience,
-        json_agg(DISTINCT jsonb_build_object(
-          'category', sc.category_name,
-          'skill', s.skill_name
-        )) FILTER (WHERE s.id IS NOT NULL) as skills,
-        json_agg(DISTINCT jsonb_build_object(
-          'title', we.job_title,
-          'company', we.company_name,
-          'location', we.location,
-          'start_date', we.start_date,
-          'end_date', we.end_date,
-          'is_current', we.is_current,
-          'description', we.description
-        )) FILTER (WHERE we.id IS NOT NULL) as work_experience,
-        json_agg(DISTINCT jsonb_build_object(
-          'degree', e.degree_name,
-          'field', e.field_of_study,
-          'institution', e.institution_name,
-          'location', e.location,
-          'graduation_year', e.graduation_year
-        )) FILTER (WHERE e.id IS NOT NULL) as education
-      FROM candidate_profile cp
-      LEFT JOIN skills s ON cp.id = s.candidate_id
-      LEFT JOIN skill_categories sc ON s.category_id = sc.id
-      LEFT JOIN work_experience we ON cp.id = we.candidate_id
-      LEFT JOIN education e ON cp.id = e.candidate_id
-      WHERE cp.id = 1
-      GROUP BY cp.id
-    `;
-    
-    const result = await client.query(profileQuery);
-    
-    if (result.rows.length === 0) {
-      return 'No candidate profile found.';
-    }
-    
-    const profile = result.rows[0];
-    
-    // Format the context in a natural way for the AI
-    return `You are a digital twin AI assistant representing ${profile.first_name} ${profile.last_name}.
-
-PROFILE:
-- Name: ${profile.first_name} ${profile.last_name}
-- Email: ${profile.email}
-- Phone: ${profile.phone}
-- Location: ${profile.location}
-- Current Position: ${profile.current_position}
-- Years of Experience: ${profile.years_of_experience}
-
-CAREER OBJECTIVE:
-${profile.career_objective}
-
-PROFESSIONAL SUMMARY:
-${profile.professional_summary}
-
-SKILLS:
-${profile.skills ? profile.skills.map((s: any) => `- ${s.category}: ${s.skill}`).join('\n') : 'No skills listed'}
-
-WORK EXPERIENCE:
-${profile.work_experience ? profile.work_experience.map((exp: any) => `
-- ${exp.title} at ${exp.company} (${exp.location})
-  ${exp.start_date} - ${exp.is_current ? 'Present' : exp.end_date || 'N/A'}
-  ${exp.description || ''}
-`).join('\n') : 'No work experience listed'}
-
-EDUCATION:
-${profile.education ? profile.education.map((edu: any) => `
-- ${edu.degree} in ${edu.field}
-  ${edu.institution}, ${edu.location}
-  Graduated: ${edu.graduation_year || 'In Progress'}
-`).join('\n') : 'No education listed'}
-
-INSTRUCTIONS:
-- Answer questions as if you are ${profile.first_name}, speaking in first person
-- Provide accurate information based on the profile data above
-- Be professional, friendly, and helpful
-- If asked about experience, skills, or qualifications, reference specific details from above
-- If you don't have information about something, politely say so
-- Help recruiters and hiring managers understand ${profile.first_name}'s background and qualifications`;
-    
+    return await work(client);
   } finally {
     client.release();
   }
+}
+
+const candidateIdSchema = z.object({
+  candidateId: z.number().int().positive().default(1),
+});
+
+const profileTools = {
+  getCandidateProfile: tool({
+    description: 'Get basic candidate profile from candidate_profile table.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT id, first_name, last_name, email, phone, location,
+                 career_objective, professional_summary, status,
+                 current_position, years_of_experience
+          FROM candidate_profile
+          WHERE id = $1
+          `,
+          [candidateId],
+        );
+        return result.rows[0] || null;
+      });
+    },
+  }),
+
+  getContactInfo: tool({
+    description: 'Get contact information from contact_info table.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT contact_type, contact_value, is_primary
+          FROM contact_info
+          WHERE candidate_id = $1
+          ORDER BY is_primary DESC, contact_type ASC
+          `,
+          [candidateId],
+        );
+        return result.rows;
+      });
+    },
+  }),
+
+  getSkills: tool({
+    description: 'Get candidate skills grouped by categories from skills and skill_categories tables.',
+    inputSchema: z.object({
+      candidateId: z.number().int().positive().default(1),
+      category: z.string().trim().optional(),
+    }),
+    execute: async ({ candidateId, category }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT sc.category_name, s.skill_name, s.proficiency_level, s.years_of_experience
+          FROM skills s
+          LEFT JOIN skill_categories sc ON s.category_id = sc.id
+          WHERE s.candidate_id = $1
+            AND ($2::text IS NULL OR sc.category_name ILIKE $2)
+          ORDER BY sc.display_order NULLS LAST, s.skill_name ASC
+          `,
+          [candidateId, category ? `%${category}%` : null],
+        );
+        return result.rows;
+      });
+    },
+  }),
+
+  getWorkExperience: tool({
+    description: 'Get work history, highlights, and tags from work_experience tables.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT
+            we.id,
+            we.job_title,
+            we.company_name,
+            we.location,
+            we.start_date,
+            we.end_date,
+            we.is_current,
+            we.employment_type,
+            we.description,
+            COALESCE(
+              json_agg(DISTINCT weh.highlight_text)
+              FILTER (WHERE weh.id IS NOT NULL),
+              '[]'::json
+            ) AS highlights,
+            COALESCE(
+              json_agg(DISTINCT wet.tag_name)
+              FILTER (WHERE wet.id IS NOT NULL),
+              '[]'::json
+            ) AS tags
+          FROM work_experience we
+          LEFT JOIN work_experience_highlights weh ON weh.experience_id = we.id
+          LEFT JOIN work_experience_tags wet ON wet.experience_id = we.id
+          WHERE we.candidate_id = $1
+          GROUP BY we.id
+          ORDER BY we.is_current DESC, we.start_date DESC
+          `,
+          [candidateId],
+        );
+        return result.rows;
+      });
+    },
+  }),
+
+  getEducation: tool({
+    description: 'Get education and coursework from education tables.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT
+            e.id,
+            e.degree_type,
+            e.degree_name,
+            e.field_of_study,
+            e.institution_name,
+            e.location,
+            e.start_date,
+            e.end_date,
+            e.graduation_year,
+            e.is_current,
+            e.description,
+            COALESCE(
+              json_agg(DISTINCT ec.course_name)
+              FILTER (WHERE ec.id IS NOT NULL),
+              '[]'::json
+            ) AS coursework
+          FROM education e
+          LEFT JOIN education_coursework ec ON ec.education_id = e.id
+          WHERE e.candidate_id = $1
+          GROUP BY e.id
+          ORDER BY e.end_date DESC NULLS LAST, e.start_date DESC NULLS LAST
+          `,
+          [candidateId],
+        );
+        return result.rows;
+      });
+    },
+  }),
+
+  getProjects: tool({
+    description: 'Get projects, highlights, and tags from projects tables.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT
+            p.id,
+            p.project_title,
+            p.project_subtitle,
+            p.description,
+            p.start_date,
+            p.end_date,
+            p.project_url,
+            p.repository_url,
+            p.is_featured,
+            COALESCE(
+              json_agg(DISTINCT ph.highlight_text)
+              FILTER (WHERE ph.id IS NOT NULL),
+              '[]'::json
+            ) AS highlights,
+            COALESCE(
+              json_agg(DISTINCT pt.tag_name)
+              FILTER (WHERE pt.id IS NOT NULL),
+              '[]'::json
+            ) AS tags
+          FROM projects p
+          LEFT JOIN project_highlights ph ON ph.project_id = p.id
+          LEFT JOIN project_tags pt ON pt.project_id = p.id
+          WHERE p.candidate_id = $1
+          GROUP BY p.id
+          ORDER BY p.is_featured DESC, p.created_at DESC
+          `,
+          [candidateId],
+        );
+        return result.rows;
+      });
+    },
+  }),
+
+  getCertifications: tool({
+    description: 'Get certifications from certifications table.',
+    inputSchema: candidateIdSchema,
+    execute: async ({ candidateId }) => {
+      return withClient(async (client) => {
+        const result = await client.query(
+          `
+          SELECT certification_name, issuing_organization, issue_date, expiry_date,
+                 credential_id, credential_url, description
+          FROM certifications
+          WHERE candidate_id = $1
+          ORDER BY created_at DESC
+          `,
+          [candidateId],
+        );
+        return result.rows;
+      });
+    },
+  }),
+};
+
+async function buildFallbackReply(): Promise<string> {
+  return withClient(async (client) => {
+    const result = await client.query(
+      `
+      SELECT first_name, last_name, current_position, years_of_experience,
+             professional_summary, location
+      FROM candidate_profile
+      WHERE id = 1
+      `,
+    );
+
+    if (!result.rows.length) {
+      return 'I could not find my profile in the database right now. Please try again in a moment.';
+    }
+
+    const profile = result.rows[0];
+    return `Hi, I'm ${profile.first_name} ${profile.last_name}, a ${profile.current_position} based in ${profile.location}. I have ${profile.years_of_experience} years of experience. ${profile.professional_summary}`;
+  });
 }
 
 export async function POST(req: Request) {
@@ -138,49 +276,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ reply: `(mock) Echo: ${lastUser}` });
   }
 
-  // Try to call Groq SDK if available. Keep this implementation tolerant
-  // so repository builds even if the SDK isn't installed in this environment.
   try {
-    // Fetch candidate context from database
-    const candidateContext = await getCandidateContext();
-    
-    // Try common package names - adapt if your project uses a different SDK import
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const groqSdk = await import('groq-sdk').catch(() => null);
+    const result = await generateText({
+      model: groq(GROQ_MODEL),
+      system: `You are a digital twin assistant for a candidate resume app.
 
-    if (!groqSdk) {
-      return NextResponse.json({ error: 'Groq SDK not installed on server' }, { status: 501 });
-    }
+Use tool-calling to fetch candidate data from the PostgreSQL schema (candidate_profile, contact_info, skills, skill_categories, work_experience, work_experience_highlights, work_experience_tags, education, education_coursework, projects, project_highlights, project_tags, certifications).
 
-    // Example usage - adapt to the actual SDK methods available in your version.
-    // This is a generic pattern: create client with API key, call chat/completion, return text.
-    // Replace the following lines with the correct SDK usage if different.
-    const Groq = groqSdk.default || groqSdk.Groq;
-    const client = new Groq({ apiKey: GROQ_API_KEY });
-
-    // Format messages for Groq API
-    const formattedMessages = [
-      // System message with candidate context
-      {
-        role: 'system' as const,
-        content: candidateContext,
-      },
-      // User messages
-      ...messages.map((m) => ({
-        role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
-        content: m.text,
-      })),
-    ];
-
-    // Call Groq API with chat completions
-    const response = await client.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: formattedMessages,
-      temperature: 0.7,
-      max_tokens: 1000,
+Important behavior:
+- Do not assume profile details; call tools for factual data.
+- If a question is broad (e.g., "tell me about yourself"), call enough tools to answer fully.
+- If data is missing, say that clearly.
+    - Answer in first person as the candidate and keep responses recruiter-friendly.
+    - Use a conversational, natural tone (warm, clear, and concise).
+    - Avoid sounding robotic or listing raw database fields unless specifically asked.
+    - Prefer short paragraphs or light bullets that are easy to read in chat.
+`,
+      messages: messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({
+          role: m.role,
+          content: m.text,
+        })),
+      tools: profileTools,
+      stopWhen: stepCountIs(6),
+      temperature: 0.4,
     });
 
-    const textReply = response?.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
+    let textReply = result.text?.trim() || '';
+
+    if (!textReply) {
+      textReply = await buildFallbackReply();
+    }
 
     return NextResponse.json({ reply: textReply });
   } catch (err: any) {
