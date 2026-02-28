@@ -3,8 +3,8 @@ import Chat from 'components/Chat/Chat';
 
 export default function ChatPage() {
   return (
-    <div>
+    <main className="py-6">
       <Chat />
-    </div>
+    </main>
   );
 }

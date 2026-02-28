@@ -20,9 +20,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.2.0
-      '@types/node':
-        specifier: ^20
-        version: 20.19.33
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.14)
@@ -81,6 +78,9 @@ importers:
         specifier: ^4.3.5
         version: 4.3.6
     devDependencies:
+      '@types/node':
+        specifier: ^20.19.33
+        version: 20.19.33
       '@types/pg':
         specifier: ^8.16.0
         version: 8.16.0

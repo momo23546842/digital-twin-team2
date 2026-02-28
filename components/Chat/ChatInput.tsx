@@ -13,14 +13,14 @@ export default function ChatInput({ onSend }: { onSend: (text: string) => void }
   }
 
   return (
-    <form onSubmit={submit} style={{ maxWidth: 800, margin: '16px auto', display: 'flex', gap: 8, padding: '0 8px' }}>
+    <form onSubmit={submit} className="chat-input-form">
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Send a message..."
-        style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #e6e9ee' }}
+        className="chat-input"
       />
-      <button type="submit" style={{ padding: '10px 14px', borderRadius: 8 }}>Send</button>
+      <button type="submit" className="chat-send-btn">Send</button>
     </form>
   );
 }

@@ -263,104 +263,106 @@ export default async function Page() {
   const portfolio = await getPortfolioData(candidateId);
 
   return (
-    <div className="max-w-5xl mx-auto px-4" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
+    <div className="portfolio-container max-w-5xl mx-auto px-6 py-20">
       {!portfolio.profile ? (
-        <section className="py-6">
-          <h1 className="text-4xl font-extrabold">Professional Portfolio</h1>
-          <p className="text-slate-600">No profile data found.</p>
+        <section className="hero-section text-center py-20">
+          <h1 className="text-4xl font-extrabold text-gradient">Professional Portfolio</h1>
+          <p className="text-slate-600 mt-4">No profile data found.</p>
         </section>
       ) : (
         <>
-          <section className="py-6 border-b">
-            <p className="text-slate-500" style={{ marginBottom: '0.35rem' }}>
-              Professional Portfolio
-            </p>
-            <h1 className="text-4xl font-extrabold" style={{ marginTop: 0, marginBottom: '0.35rem' }}>
+          <section className="hero-section py-6 border-b animate-fade-in">
+            <span className="badge mb-4">Professional Portfolio</span>
+            <h1 className="text-4xl font-extrabold text-gradient mt-4 mb-2">
               {portfolio.profile.firstName} {portfolio.profile.lastName}
             </h1>
-            <p className="text-lg" style={{ marginTop: 0, marginBottom: '0.35rem' }}>
+            <p className="text-lg text-slate-600 mb-2">
               {portfolio.profile.currentPosition || 'Digital Twin Candidate'}
             </p>
-            <p className="text-slate-600" style={{ marginTop: 0 }}>
+            <p className="text-slate-600">
               {portfolio.profile.location || 'Location not specified'}
               {portfolio.profile.status ? ` · ${portfolio.profile.status}` : ''}
             </p>
             {(portfolio.profile.summary || portfolio.profile.objective) && (
-              <p className="text-slate-600" style={{ maxWidth: '46rem' }}>
+              <p className="text-slate-600 mt-4" style={{ maxWidth: '46rem' }}>
                 {portfolio.profile.summary || portfolio.profile.objective}
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-              <p style={{ margin: 0 }}>
-                <strong>{portfolio.profile.yearsOfExperience ?? 0}+</strong> years experience
-              </p>
-              <p style={{ margin: 0 }}>
-                <strong>{portfolio.skills.length}</strong> skills
-              </p>
-              <p style={{ margin: 0 }}>
-                <strong>{portfolio.projects.length}</strong> projects
-              </p>
-              <p style={{ margin: 0 }}>
-                <strong>{portfolio.chat.totalConversations}</strong> chat sessions
-              </p>
+            <div className="stats-grid mt-6">
+              <div className="stat-item">
+                <div className="stat-value">{portfolio.profile.yearsOfExperience ?? 0}+</div>
+                <div className="stat-label">Years Experience</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{portfolio.skills.length}</div>
+                <div className="stat-label">Skills</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{portfolio.projects.length}</div>
+                <div className="stat-label">Projects</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{portfolio.chat.totalConversations}</div>
+                <div className="stat-label">Chat Sessions</div>
+              </div>
             </div>
 
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', alignItems: 'end', flexWrap: 'wrap' }}>
-              <Link href="/chat" style={{ textDecoration: 'underline' }}>
-                Open AI chat
+            <div className="mt-6">
+              <Link href="/chat" className="btn btn-primary">
+                Open AI Chat →
               </Link>
             </div>
           </section>
 
           <section className="py-6 border-b">
-            <h2 style={{ marginTop: 0 }}>Contact</h2>
-            <div style={{ display: 'grid', gap: '0.35rem' }}>
-              <p style={{ margin: 0 }}>
+            <h2 className="section-title mb-4">Contact</h2>
+            <div className="card">
+              <p className="mb-2">
                 <strong>Email:</strong> {portfolio.profile.email}
               </p>
               {portfolio.contacts.map((contact) => (
-                <p key={`${contact.type}-${contact.value}`} style={{ margin: 0 }} className="text-slate-600">
+                <p key={`${contact.type}-${contact.value}`} className="text-slate-600 mb-1">
                   <strong>{contact.type}:</strong> {contact.value}
-                  {contact.isPrimary ? ' (primary)' : ''}
+                  {contact.isPrimary ? <span className="badge ml-2">Primary</span> : ''}
                 </p>
               ))}
             </div>
           </section>
 
           <section className="py-6 border-b">
-            <h2 style={{ marginTop: 0 }}>Skills & Expertise</h2>
+            <h2 className="section-title mb-4">Skills & Expertise</h2>
             {portfolio.skills.length === 0 ? (
               <p className="text-slate-600">No skills found in database.</p>
             ) : (
-              <ul style={{ margin: 0, paddingLeft: '1.2rem', columnCount: 2, columnGap: '2rem' }}>
+              <div className="skills-container">
                 {portfolio.skills.map((skill) => (
-                  <li key={`${skill.category}-${skill.name}`} style={{ breakInside: 'avoid', marginBottom: '0.4rem' }}>
-                    {skill.name} <span className="text-slate-600">({skill.category}{skill.level ? ` · ${skill.level}` : ''})</span>
-                  </li>
+                  <span key={`${skill.category}-${skill.name}`} className="skill-tag">
+                    {skill.name}
+                  </span>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
 
           <section className="py-6 border-b">
-            <h2 style={{ marginTop: 0 }}>Experience</h2>
+            <h2 className="section-title mb-4">Experience</h2>
             {portfolio.experience.length === 0 ? (
               <p className="text-slate-600">No experience entries found in database.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '1.1rem' }}>
+              <div className="timeline">
                 {portfolio.experience.map((item) => (
-                  <article key={item.id}>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.jobTitle}</strong> · {item.companyName}
+                  <article key={item.id} className="timeline-item">
+                    <p className="font-semibold mb-1">
+                      {item.jobTitle} <span className="text-slate-600">· {item.companyName}</span>
                     </p>
-                    <p className="text-slate-600" style={{ marginTop: '0.2rem', marginBottom: '0.35rem' }}>
+                    <p className="text-slate-600 text-sm mb-2">
                       {item.startDate} - {item.isCurrent ? 'Present' : item.endDate || 'Present'}
                       {item.location ? ` · ${item.location}` : ''}
                     </p>
-                    {item.description && <p className="text-slate-600" style={{ marginTop: 0 }}>{item.description}</p>}
+                    {item.description && <p className="text-slate-600 mb-2">{item.description}</p>}
                     {item.highlights.length > 0 && (
-                      <ul style={{ marginTop: '0.25rem', paddingLeft: '1.2rem' }}>
+                      <ul className="highlights-list">
                         {item.highlights.map((highlight) => (
                           <li key={highlight}>{highlight}</li>
                         ))}
@@ -373,38 +375,38 @@ export default async function Page() {
           </section>
 
           <section className="py-6 border-b">
-            <h2 style={{ marginTop: 0 }}>Featured Projects</h2>
+            <h2 className="section-title mb-4">Featured Projects</h2>
             {portfolio.projects.length === 0 ? (
               <p className="text-slate-600">No projects found in database.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '1.1rem' }}>
+              <div className="feature-grid">
                 {portfolio.projects.map((project) => (
-                  <article key={project.id}>
-                    <p style={{ margin: 0 }}>
-                      <strong>{project.title}</strong>
-                      {project.isFeatured ? ' · Featured' : ''}
+                  <article key={project.id} className="feature-card card-glow">
+                    <p className="font-semibold mb-1">
+                      {project.title}
+                      {project.isFeatured && <span className="badge badge-success ml-2">Featured</span>}
                     </p>
                     {project.subtitle && (
-                      <p className="text-slate-600" style={{ marginTop: '0.2rem', marginBottom: '0.35rem' }}>
-                        {project.subtitle}
-                      </p>
+                      <p className="text-slate-600 text-sm mb-2">{project.subtitle}</p>
                     )}
                     {project.description && (
-                      <p className="text-slate-600" style={{ marginTop: 0 }}>{project.description}</p>
+                      <p className="text-slate-600 mb-3">{project.description}</p>
                     )}
                     {project.tags.length > 0 && (
-                      <p className="text-slate-600" style={{ marginTop: '0.3rem' }}>
-                        Tech: {project.tags.join(', ')}
-                      </p>
+                      <div className="mb-3">
+                        {project.tags.map((tag) => (
+                          <span key={tag} className="skill-tag mr-2 mb-1">{tag}</span>
+                        ))}
+                      </div>
                     )}
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div className="flex gap-4">
                       {project.projectUrl && (
-                        <a href={project.projectUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>
-                          Live project
+                        <a href={project.projectUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+                          Live Project
                         </a>
                       )}
                       {project.repositoryUrl && (
-                        <a href={project.repositoryUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>
+                        <a href={project.repositoryUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
                           Repository
                         </a>
                       )}
@@ -416,28 +418,37 @@ export default async function Page() {
           </section>
 
           <section className="py-6">
-            <h2 style={{ marginTop: 0 }}>Chat with My AI</h2>
-            <p className="text-slate-600" style={{ marginTop: 0 }}>
-              Based on stored conversation history from the digital twin database.
-            </p>
-            <p style={{ marginTop: 0 }}>
-              <strong>{portfolio.chat.totalConversations}</strong> conversations ·{' '}
-              <strong>{portfolio.chat.totalMessages}</strong> total messages
-            </p>
-            {portfolio.chat.recentSessions.length === 0 ? (
-              <p className="text-slate-600">No recent chat sessions found.</p>
-            ) : (
-              <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
-                {portfolio.chat.recentSessions.map((session) => (
-                  <li key={session.id} style={{ marginBottom: '0.4rem' }}>
-                    {session.startedAt} · Session {session.sessionId} · {session.messageCount} messages
-                    {session.recruiterName ? ` · ${session.recruiterName}` : ''}
-                    {session.companyName ? ` @ ${session.companyName}` : ''}
-                    {session.jobTitle ? ` (${session.jobTitle})` : ''}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <h2 className="section-title mb-4">Chat with My AI</h2>
+            <div className="card">
+              <p className="text-slate-600 mb-4">
+                Based on stored conversation history from the digital twin database.
+              </p>
+              <div className="stats-grid mb-6">
+                <div className="stat-item">
+                  <div className="stat-value">{portfolio.chat.totalConversations}</div>
+                  <div className="stat-label">Conversations</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{portfolio.chat.totalMessages}</div>
+                  <div className="stat-label">Total Messages</div>
+                </div>
+              </div>
+              {portfolio.chat.recentSessions.length === 0 ? (
+                <p className="text-slate-600">No recent chat sessions found.</p>
+              ) : (
+                <div className="recent-sessions">
+                  {portfolio.chat.recentSessions.map((session) => (
+                    <div key={session.id} className="session-item glass-subtle">
+                      <span className="badge badge-info">{session.messageCount} messages</span>
+                      <span className="text-slate-600 ml-2">{session.startedAt}</span>
+                      {session.recruiterName && <span className="text-slate-600"> · {session.recruiterName}</span>}
+                      {session.companyName && <span className="text-slate-600"> @ {session.companyName}</span>}
+                      {session.jobTitle && <span className="text-slate-600"> ({session.jobTitle})</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         </>
       )}

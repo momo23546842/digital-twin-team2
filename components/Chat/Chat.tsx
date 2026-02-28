@@ -36,10 +36,14 @@ export default function Chat() {
   }
 
   return (
-    <div style={{ padding: '24px 16px' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 12 }}>Chat</h2>
-      <MessageList messages={messages} />
-      <ChatInput onSend={send} />
+    <div className="chat-container">
+      <div className="chat-header">
+        <h2>AI Assistant</h2>
+      </div>
+      <div className="chat-card">
+        <MessageList messages={messages} />
+        <ChatInput onSend={send} />
+      </div>
     </div>
   );
 }
