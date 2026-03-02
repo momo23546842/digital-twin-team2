@@ -12,6 +12,21 @@ export default function Chat() {
     { id: genId(), role: 'system', text: 'You are connected to Digital Twin demo.', createdAt: new Date().toISOString() },
   ]);
 
+  // Text-to-speech toggle
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+
+  // speak assistant messages automatically when TTS is on
+  useEffect(() => {
+    if (!ttsEnabled) return;
+    const last = messages[messages.length - 1];
+    if (last?.role === 'assistant' && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // cancel any previous utterances to avoid overlap
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(last.text);
+      window.speechSynthesis.speak(utter);
+    }
+  }, [messages, ttsEnabled]);
+
   function send(text: string) {
     const userMsg: Message = { id: genId(), role: 'user', text, createdAt: new Date().toISOString() };
     setMessages((s) => [...s, userMsg]);
@@ -37,8 +52,22 @@ export default function Chat() {
 
   return (
     <div className="chat-container">
-      <div className="chat-header">
+      <div className="chat-header flex items-center justify-between">
         <h2>AI Assistant</h2>
+        <button
+          className="tts-toggle"
+          onClick={() => {
+            setTtsEnabled((v) => {
+              const next = !v;
+              if (!next && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+              }
+              return next;
+            });
+          }}
+        >
+          {ttsEnabled ? '🔊 On' : '🔇 Off'}
+        </button>
       </div>
       <div className="chat-card">
         <MessageList messages={messages} />
