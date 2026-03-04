@@ -1,5 +1,6 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
+import { getSkills, createSkill, deleteSkill, updateSkill } from '../actions';
 
 interface Skill { id: number; candidate_id: number; skill_name: string; proficiency_level?: string; years_of_experience?: number }
 
@@ -11,9 +12,8 @@ export default function SkillsManager({ candidateId = 1 }: { candidateId?: numbe
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/skills?candidateId=${candidateId}`);
-      const data = await res.json();
-      setSkills(data.skills || []);
+      const data = await getSkills(candidateId);
+      setSkills(data);
     } finally { setLoading(false); }
   }
 
@@ -21,26 +21,38 @@ export default function SkillsManager({ candidateId = 1 }: { candidateId?: numbe
 
   async function create() {
     if (!form.skill_name) return alert('Enter skill name');
-    const res = await fetch('/api/admin/skills', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: candidateId, ...form }) });
-    const d = await res.json();
-    if (res.ok) { setSkills((s) => [d.skill, ...s]); setForm({ skill_name: '', proficiency_level: '' }); }
-    else alert('Failed to add');
+    try {
+      const d = await createSkill(candidateId, form.skill_name, form.proficiency_level);
+      if (d.skill) { setSkills((s) => [d.skill, ...s]); setForm({ skill_name: '', proficiency_level: '' }); }
+      else alert('Failed to add');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add');
+    }
   }
 
   async function remove(id: number) {
     if (!confirm('Delete skill?')) return;
-    const res = await fetch(`/api/admin/skills/${id}`, { method: 'DELETE' });
-    if (res.ok) setSkills((s) => s.filter((x) => x.id !== id));
-    else alert('Failed to delete');
+    try {
+      await deleteSkill(id);
+      setSkills((s) => s.filter((x) => x.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete');
+    }
   }
 
   async function toggleEdit(id: number) {
     const name = prompt('Edit skill name', skills.find((s) => s.id === id)?.skill_name || '');
     if (name == null) return;
-    const res = await fetch(`/api/admin/skills/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skill_name: name }) });
-    const d = await res.json();
-    if (res.ok) setSkills((s) => s.map((x) => x.id === id ? d.skill : x));
-    else alert('Failed to update');
+    try {
+      const d = await updateSkill(id, name);
+      if (d.skill) setSkills((s) => s.map((x) => x.id === id ? d.skill : x));
+      else alert('Failed to update');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update');
+    }
   }
 
   return (

@@ -1,18 +1,12 @@
 import React from 'react';
+import { getProfiles } from './actions';
 import ProfileEditor from './components/ProfileEditor';
 import SkillsManager from './components/SkillsManager';
 import EducationManager from './components/EducationManager';
 import ProjectsManager from './components/ProjectsManager';
 
-async function fetchProfiles() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/admin/profiles`, { cache: 'no-store' });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.profiles || [];
-}
-
 export default async function AdminPage() {
-  const profiles = await fetchProfiles();
+  const profiles = await getProfiles();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">

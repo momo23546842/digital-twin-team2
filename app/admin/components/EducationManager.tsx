@@ -1,5 +1,6 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
+import { getEducation, createEducation, deleteEducation, updateEducation } from '../actions';
 
 interface Education { id: number; degree_type?: string; degree_name?: string; institution_name?: string }
 
@@ -11,9 +12,8 @@ export default function EducationManager({ candidateId = 1 }: { candidateId?: nu
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/education?candidateId=${candidateId}`);
-      const d = await res.json();
-      setItems(d.education || []);
+      const d = await getEducation(candidateId);
+      setItems(d);
     } finally { setLoading(false); }
   }
 
@@ -21,26 +21,38 @@ export default function EducationManager({ candidateId = 1 }: { candidateId?: nu
 
   async function create() {
     if (!form.degree_name) return alert('Enter degree name');
-    const res = await fetch('/api/admin/education', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: candidateId, ...form }) });
-    const d = await res.json();
-    if (res.ok) { setItems((s) => [d.education, ...s]); setForm({ degree_type: '', degree_name: '', institution_name: '' }); }
-    else alert('Failed to add');
+    try {
+      const d = await createEducation(candidateId, form.degree_type, form.degree_name, form.institution_name);
+      if (d.education) { setItems((s) => [d.education, ...s]); setForm({ degree_type: '', degree_name: '', institution_name: '' }); }
+      else alert('Failed to add');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add');
+    }
   }
 
   async function remove(id: number) {
     if (!confirm('Delete education?')) return;
-    const res = await fetch(`/api/admin/education/${id}`, { method: 'DELETE' });
-    if (res.ok) setItems((s) => s.filter((x) => x.id !== id));
-    else alert('Failed to delete');
+    try {
+      await deleteEducation(id);
+      setItems((s) => s.filter((x) => x.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete');
+    }
   }
 
   async function edit(id: number) {
     const name = prompt('Edit degree name', items.find((i) => i.id === id)?.degree_name || '');
     if (name == null) return;
-    const res = await fetch(`/api/admin/education/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ degree_name: name }) });
-    const d = await res.json();
-    if (res.ok) setItems((s) => s.map((x) => x.id === id ? d.education : x));
-    else alert('Failed to update');
+    try {
+      const d = await updateEducation(id, name);
+      if (d.education) setItems((s) => s.map((x) => x.id === id ? d.education : x));
+      else alert('Failed to update');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update');
+    }
   }
 
   return (

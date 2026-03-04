@@ -1,5 +1,6 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
+import { updateProfile, deleteProfile } from '../actions';
 
 interface Profile {
   id: number;
@@ -25,19 +26,17 @@ export default function ProfileEditor({ profile, onDeleted, onUpdated }: { profi
   async function save() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/profiles/${profile.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const data = await updateProfile(profile.id, form);
+      if (data.profile) {
         onUpdated(data.profile);
         setEditing(false);
       } else {
         console.error(data);
         alert('Failed to update profile');
       }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -47,14 +46,16 @@ export default function ProfileEditor({ profile, onDeleted, onUpdated }: { profi
     if (!confirm('Delete this profile?')) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/profiles/${profile.id}`, { method: 'DELETE' });
-      if (res.ok) {
+      const data = await deleteProfile(profile.id);
+      if (data.success || !data.error) {
         onDeleted(profile.id);
       } else {
-        const d = await res.json();
-        console.error(d);
+        console.error(data);
         alert('Failed to delete');
       }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
+import { getProjects, createProject, deleteProject, updateProject } from '../actions';
 
 interface Project { id: number; project_title: string; project_subtitle?: string; description?: string }
 
@@ -11,9 +12,8 @@ export default function ProjectsManager({ candidateId = 1 }: { candidateId?: num
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/projects?candidateId=${candidateId}`);
-      const d = await res.json();
-      setItems(d.projects || []);
+      const d = await getProjects(candidateId);
+      setItems(d);
     } finally { setLoading(false); }
   }
 
@@ -21,26 +21,38 @@ export default function ProjectsManager({ candidateId = 1 }: { candidateId?: num
 
   async function create() {
     if (!form.project_title) return alert('Enter project title');
-    const res = await fetch('/api/admin/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ candidate_id: candidateId, ...form }) });
-    const d = await res.json();
-    if (res.ok) { setItems((s) => [d.project, ...s]); setForm({ project_title: '', description: '' }); }
-    else alert('Failed to add');
+    try {
+      const d = await createProject(candidateId, form.project_title, form.description);
+      if (d.project) { setItems((s) => [d.project, ...s]); setForm({ project_title: '', description: '' }); }
+      else alert('Failed to add');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add');
+    }
   }
 
   async function remove(id: number) {
     if (!confirm('Delete project?')) return;
-    const res = await fetch(`/api/admin/projects/${id}`, { method: 'DELETE' });
-    if (res.ok) setItems((s) => s.filter((x) => x.id !== id));
-    else alert('Failed to delete');
+    try {
+      await deleteProject(id);
+      setItems((s) => s.filter((x) => x.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete');
+    }
   }
 
   async function edit(id: number) {
     const title = prompt('Edit title', items.find((i) => i.id === id)?.project_title || '');
     if (title == null) return;
-    const res = await fetch(`/api/admin/projects/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project_title: title }) });
-    const d = await res.json();
-    if (res.ok) setItems((s) => s.map((x) => x.id === id ? d.project : x));
-    else alert('Failed to update');
+    try {
+      const d = await updateProject(id, title);
+      if (d.project) setItems((s) => s.map((x) => x.id === id ? d.project : x));
+      else alert('Failed to update');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update');
+    }
   }
 
   return (
