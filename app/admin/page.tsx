@@ -42,11 +42,7 @@ export default async function AdminPage() {
       <div className="space-y-12">
         {profiles.map((p: any) => (
           <div key={p.id} className="border rounded-lg p-6">
-            <ProfileEditor
-              profile={p}
-              onDeleted={() => { /* nothing special */ }}
-              onUpdated={() => { /* no-op */ }}
-            />
+            <ProfileEditor profile={p} />
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <SkillsManager candidateId={p.id} />

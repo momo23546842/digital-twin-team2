@@ -14,7 +14,7 @@ interface Profile {
   status?: string;
 }
 
-export default function ProfileEditor({ profile, onDeleted, onUpdated }: { profile: Profile; onDeleted: (id: number) => void; onUpdated: (p: Profile) => void; }) {
+export default function ProfileEditor({ profile }: { profile: Profile }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Partial<Profile>>(profile);
   const [loading, setLoading] = useState(false);
@@ -28,8 +28,9 @@ export default function ProfileEditor({ profile, onDeleted, onUpdated }: { profi
     try {
       const data = await updateProfile(profile.id, form);
       if (data.profile) {
-        onUpdated(data.profile);
+        // re-render admin server page to pick up changes
         setEditing(false);
+        if (typeof window !== 'undefined') window.location.reload();
       } else {
         console.error(data);
         alert('Failed to update profile');
@@ -48,7 +49,8 @@ export default function ProfileEditor({ profile, onDeleted, onUpdated }: { profi
     try {
       const data = await deleteProfile(profile.id);
       if (data.success || !data.error) {
-        onDeleted(profile.id);
+        // reload to update server-rendered list
+        if (typeof window !== 'undefined') window.location.reload();
       } else {
         console.error(data);
         alert('Failed to delete');
