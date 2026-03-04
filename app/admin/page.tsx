@@ -18,33 +18,38 @@ export default async function AdminPage() {
 
       {/* simple summary using counts from database */}
       {dashboard && (
-        <div className="mt-6 mb-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="card p-4">
-            <h4 className="font-semibold">Profiles</h4>
-            <p className="text-2xl">{dashboard.profiles}</p>
+        <div className="mt-6 mb-10 stats-grid">
+          <div className="stat-item">
+            <div className="stat-value">{dashboard.profiles}</div>
+            <div className="stat-label">Profiles</div>
           </div>
-          <div className="card p-4">
-            <h4 className="font-semibold">Skills</h4>
-            <p className="text-2xl">{dashboard.skills}</p>
+          <div className="stat-item">
+            <div className="stat-value">{dashboard.skills}</div>
+            <div className="stat-label">Skills</div>
           </div>
-          <div className="card p-4">
-            <h4 className="font-semibold">Educations</h4>
-            <p className="text-2xl">{dashboard.education}</p>
+          <div className="stat-item">
+            <div className="stat-value">{dashboard.education}</div>
+            <div className="stat-label">Educations</div>
           </div>
-          <div className="card p-4">
-            <h4 className="font-semibold">Projects</h4>
-            <p className="text-2xl">{dashboard.projects}</p>
+          <div className="stat-item">
+            <div className="stat-value">{dashboard.projects}</div>
+            <div className="stat-label">Projects</div>
           </div>
         </div>
       )}
 
       {/* iterate profiles and show related managers so data reflects DB */}
-      <div className="space-y-12">
+      <div className="space-y-8">
         {profiles.map((p: any) => (
-          <div key={p.id} className="border rounded-lg p-6">
-            <ProfileEditor profile={p} />
+          <div key={p.id} className="card card-glow">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">{p.first_name} {p.last_name}</h3>
+                <div className="text-slate-600">{p.email} • {p.location || '—'}</div>
+              </div>
+            </div>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <SkillsManager candidateId={p.id} />
               <EducationManager candidateId={p.id} />
             </div>
