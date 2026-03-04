@@ -1,5 +1,5 @@
 import React from 'react';
-import { getProfiles } from './actions';
+import { getProfiles, getDashboard } from './actions';
 import ProfileEditor from './components/ProfileEditor';
 import SkillsManager from './components/SkillsManager';
 import EducationManager from './components/EducationManager';
@@ -7,6 +7,7 @@ import ProjectsManager from './components/ProjectsManager';
 
 export default async function AdminPage() {
   const profiles = await getProfiles();
+  const dashboard = await getDashboard();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">
@@ -15,26 +16,48 @@ export default async function AdminPage() {
         <p className="text-slate-600">Manage candidate profiles, skills, education, and projects.</p>
       </div>
 
-      <div style={{ display: 'grid', gap: 12 }}>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {profiles.map((p: any) => (
+      {/* simple summary using counts from database */}
+      {dashboard && (
+        <div className="mt-6 mb-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card p-4">
+            <h4 className="font-semibold">Profiles</h4>
+            <p className="text-2xl">{dashboard.profiles}</p>
+          </div>
+          <div className="card p-4">
+            <h4 className="font-semibold">Skills</h4>
+            <p className="text-2xl">{dashboard.skills}</p>
+          </div>
+          <div className="card p-4">
+            <h4 className="font-semibold">Educations</h4>
+            <p className="text-2xl">{dashboard.education}</p>
+          </div>
+          <div className="card p-4">
+            <h4 className="font-semibold">Projects</h4>
+            <p className="text-2xl">{dashboard.projects}</p>
+          </div>
+        </div>
+      )}
+
+      {/* iterate profiles and show related managers so data reflects DB */}
+      <div className="space-y-12">
+        {profiles.map((p: any) => (
+          <div key={p.id} className="border rounded-lg p-6">
             <ProfileEditor
-              key={p.id}
               profile={p}
-              onDeleted={() => { /* optimistic UI not required on server page */ }}
+              onDeleted={() => { /* nothing special */ }}
               onUpdated={() => { /* no-op */ }}
             />
-          ))}
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <SkillsManager candidateId={1} />
-          <EducationManager candidateId={1} />
-        </div>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SkillsManager candidateId={p.id} />
+              <EducationManager candidateId={p.id} />
+            </div>
 
-        <div>
-          <ProjectsManager candidateId={1} />
-        </div>
+            <div className="mt-6">
+              <ProjectsManager candidateId={p.id} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

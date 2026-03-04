@@ -12,7 +12,7 @@ export default function Header() {
         </Link>
         <nav className="header-nav">
           <Link href="/chat" className="nav-link">Chat</Link>
-          <Link href="/admin" className="nav-link">Admin</Link>
+          {/* Admin link removed intentionally; dashboard is private */}
           <Link href="/chat" className="btn btn-primary btn-sm">Get Started</Link>
         </nav>
       </div>
