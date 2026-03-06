@@ -4,12 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 export default function ChatInput({ onSend }: { onSend: (text: string) => void }) {
   const [value, setValue] = useState('');
   const [recording, setRecording] = useState(false);
+  const [speechAvailable, setSpeechAvailable] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   // initialize SpeechRecognition only on the client
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
+
+    setSpeechAvailable(true);
+
     const recog = new SpeechRecognition();
     recog.lang = 'en-US';
     recog.interimResults = true;
@@ -68,8 +72,6 @@ export default function ChatInput({ onSend }: { onSend: (text: string) => void }
     }
   }
 
-  const SpeechRecognitionAvailable = !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-
   return (
     <form onSubmit={submit} className="chat-input-form flex items-center space-x-2">
       <input
@@ -78,7 +80,7 @@ export default function ChatInput({ onSend }: { onSend: (text: string) => void }
         placeholder="Send a message..."
         className="chat-input flex-1"
       />
-      {SpeechRecognitionAvailable && (
+      {speechAvailable && (
         <button
           type="button"
           onClick={toggleRecording}
