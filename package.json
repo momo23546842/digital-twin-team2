@@ -1,17 +1,54 @@
 {
   "name": "digital-twin-root",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
   "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "dev": "cd digital-twin && pnpm install && pnpm run dev",
-    "build": "cd digital-twin && pnpm install --no-frozen-lockfile && pnpm run build",
-    "start": "cd digital-twin && pnpm run start"
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
+    "start": "next start",
+    "lint": "eslint",
+    "db:upload": "tsx scripts/upload-resume-data.ts",
+    "db:upload:py": "python3 scripts/upload-resume-data.py"
   },
   "dependencies": {
-    "next": "^15.5.12"
+    "@ai-sdk/groq": "^3.0.24",
+    "@elevenlabs/elevenlabs-js": "^2.36.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@prisma/client": "6.19.2",
+    "@tailwindcss/postcss": "^4",
+    "@types/react-dom": "^19",
+    "@vapi-ai/server-sdk": "^0.11.0",
+    "@vapi-ai/web": "^2.5.2",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/mcp-adapter": "^1.0.0",
+    "ai": "^6.0.97",
+    "class-variance-authority": "^0.7.1",
+    "groq-sdk": "^0.37.0",
+    "lucide-react": "^0.562.0",
+    "mcp-handler": "^1.0.7",
+    "next": "^15.5.12",
+    "pdfjs-dist": "^5.4.530",
+    "pg": "^8.11.3",
+    "prisma": "^6.19.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "resend": "^4.0.1",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4",
+    "twilio": "^5.3.7",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@types/pg": "^8.16.0"
+    "@types/node": "^20.19.33",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.14",
+    "dotenv": "^17.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
