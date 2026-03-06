@@ -208,8 +208,10 @@ export async function queryCertifications(candidateId: number) {
 // AI SDK tool definitions — consumed by the chat API (and chat MCP tool)
 // ---------------------------------------------------------------------------
 
+// Use z.coerce.number() so that string values like "1" from LLMs are
+// automatically converted to numbers instead of failing validation.
 const candidateIdSchema = z.object({
-  candidateId: z.number().int().positive().default(1),
+  candidateId: z.coerce.number().int().positive().default(1),
 });
 
 export const profileTools = {
@@ -228,7 +230,7 @@ export const profileTools = {
   getSkills: tool({
     description: 'Get candidate skills grouped by categories from skills and skill_categories tables.',
     inputSchema: z.object({
-      candidateId: z.number().int().positive().default(1),
+      candidateId: z.coerce.number().int().positive().default(1),
       category: z.string().trim().nullable().optional(),
     }),
     execute: async ({ candidateId, category }) => querySkills(candidateId, category ?? undefined),
