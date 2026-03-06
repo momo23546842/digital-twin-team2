@@ -1,0 +1,440 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ChatLog {
+  id        String   @id
+  sessionId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model Document {
+  id        String   @id
+  userId    String
+  title     String?
+  content   String
+  source    String   @default("uploaded")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Lead {
+  id        String   @id
+  email     String
+  name      String?
+  company   String?
+  source    String   @default("chat")
+  createdAt DateTime @default(now())
+}
+
+model analytics {
+  id              String    @id
+  event_type      String
+  conversation_id String?
+  user_id         String?
+  event_data      Json?
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([created_at], map: "analytics_created_idx")
+  @@index([event_type])
+  @@index([user_id], map: "analytics_user_idx")
+}
+
+model contacts {
+  id              String     @id
+  email           String
+  name            String?
+  phone           String?
+  company         String?
+  title           String?
+  message         String?
+  source          String?    @default("chat")
+  status          String?    @default("new")
+  conversation_id String?
+  created_at      DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?  @default(now()) @db.Timestamp(6)
+  meetings        meetings[]
+
+  @@index([email])
+}
+
+model conversations {
+  id              String     @id
+  session_id      String
+  user_id         String?
+  title           String?
+  status          String?    @default("active")
+  created_at      DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?  @default(now()) @db.Timestamp(6)
+  candidate_id    Int?
+  recruiter_name  String?    @db.VarChar(255)
+  recruiter_email String?    @db.VarChar(255)
+  company_name    String?    @db.VarChar(255)
+  job_title       String?    @db.VarChar(255)
+  started_at      DateTime?  @default(now()) @db.Timestamp(6)
+  ended_at        DateTime?  @db.Timestamp(6)
+  messages        messages[]
+
+  @@index([session_id], map: "conversations_session_idx")
+  @@index([user_id], map: "conversations_user_idx")
+}
+
+model database_cache {
+  key        String    @id
+  value      String
+  expires_at DateTime? @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model ingestion_metadata {
+  id             String    @id
+  user_id        String
+  document_count Int
+  timestamp      DateTime? @default(now()) @db.Timestamp(6)
+  documents      Json?
+  expires_at     DateTime? @db.Timestamp(6)
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([user_id], map: "ingestion_metadata_user_idx")
+}
+
+model meetings {
+  id               String    @id
+  contact_id       String?
+  scheduled_at     DateTime  @db.Timestamp(6)
+  duration_minutes Int?      @default(30)
+  status           String?   @default("scheduled")
+  notes            String?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+  contacts         contacts? @relation(fields: [contact_id], references: [id], onUpdate: NoAction)
+
+  @@index([contact_id], map: "meetings_contact_idx")
+  @@index([scheduled_at], map: "meetings_scheduled_idx")
+}
+
+model messages {
+  id              String        @id
+  conversation_id String
+  role            String
+  content         String
+  voice_url       String?
+  created_at      DateTime?     @default(now()) @db.Timestamp(6)
+  metadata        Json?         @default("{}")
+  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conversation_id], map: "messages_conversation_idx")
+}
+
+model rate_limits {
+  key        String    @id
+  count      Int?      @default(1)
+  expires_at DateTime  @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([expires_at], map: "rate_limits_expires_idx")
+}
+
+model sessions {
+  id         String    @id
+  user_id    String
+  token      String    @unique
+  expires_at DateTime  @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id            String     @id
+  email         String     @unique
+  name          String
+  password_hash String
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?  @default(now()) @db.Timestamp(6)
+  sessions      sessions[]
+}
+
+model vectors {
+  id         String    @id
+  embedding  Json
+  content    String
+  metadata   Json?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([embedding(ops: JsonbPathOps)], type: Gin)
+}
+
+model PhoneCall {
+  id           String    @id @default(cuid())
+  callId       String    @unique
+  callerNumber String?
+  status       String
+  startedAt    DateTime?
+  endedAt      DateTime?
+  duration     Int?
+  recordingUrl String?
+  transcript   String?
+  summary      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model additional_info {
+  id                Int                @id @default(autoincrement())
+  candidate_id      Int?
+  info_category     String             @db.VarChar(100)
+  info_key          String             @db.VarChar(100)
+  info_value        String?
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model candidate_profile {
+  id                        Int                         @id @default(autoincrement())
+  first_name                String                      @db.VarChar(100)
+  last_name                 String                      @db.VarChar(100)
+  email                     String                      @unique @db.VarChar(255)
+  phone                     String?                     @db.VarChar(20)
+  location                  String?                     @db.VarChar(255)
+  career_objective          String?
+  professional_summary      String?
+  status                    String?                     @db.VarChar(100)
+  current_position          String?                     @db.VarChar(255)
+  years_of_experience       Int?
+  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
+  updated_at                DateTime?                   @default(now()) @db.Timestamp(6)
+  additional_info           additional_info[]
+  certifications            certifications[]
+  contact_info              contact_info[]
+  education                 education[]
+  embeddings                embeddings[]
+  job_matches               job_matches[]
+  professional_competencies professional_competencies[]
+  projects                  projects[]
+  skills                    skills[]
+  work_experience           work_experience[]
+
+  @@index([email], map: "idx_candidate_email")
+}
+
+model certifications {
+  id                   Int                @id @default(autoincrement())
+  candidate_id         Int?
+  certification_name   String             @db.VarChar(255)
+  issuing_organization String?            @db.VarChar(255)
+  issue_date           DateTime?          @db.Date
+  expiry_date          DateTime?          @db.Date
+  credential_id        String?            @db.VarChar(100)
+  credential_url       String?            @db.VarChar(500)
+  description          String?
+  created_at           DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile    candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model contact_info {
+  id                Int                @id @default(autoincrement())
+  candidate_id      Int?
+  contact_type      String             @db.VarChar(50)
+  contact_value     String             @db.VarChar(255)
+  is_primary        Boolean?           @default(false)
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model education {
+  id                   Int                    @id @default(autoincrement())
+  candidate_id         Int?
+  degree_type          String                 @db.VarChar(100)
+  degree_name          String                 @db.VarChar(255)
+  field_of_study       String?                @db.VarChar(255)
+  institution_name     String                 @db.VarChar(255)
+  location             String?                @db.VarChar(255)
+  start_date           DateTime?              @db.Date
+  end_date             DateTime?              @db.Date
+  graduation_year      Int?
+  is_current           Boolean?               @default(false)
+  gpa                  String?                @db.VarChar(20)
+  gpa_scale            String?                @db.VarChar(20)
+  description          String?
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  candidate_profile    candidate_profile?     @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  education_coursework education_coursework[]
+
+  @@index([candidate_id], map: "idx_education_candidate")
+}
+
+model education_coursework {
+  id           Int        @id @default(autoincrement())
+  education_id Int?
+  course_name  String     @db.VarChar(255)
+  created_at   DateTime?  @default(now()) @db.Timestamp(6)
+  education    education? @relation(fields: [education_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model embeddings {
+  id                Int                @id @default(autoincrement())
+  candidate_id      Int?
+  source_type       String             @db.VarChar(50)
+  source_id         Int?
+  content           String
+  embedding_vector  Float[]
+  metadata          Json?
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([candidate_id], map: "idx_embeddings_candidate")
+  @@index([source_type, source_id], map: "idx_embeddings_source")
+}
+
+model job_matches {
+  id                Int                @id @default(autoincrement())
+  candidate_id      Int?
+  job_title         String             @db.VarChar(255)
+  job_description   String?
+  company_name      String?            @db.VarChar(255)
+  match_score       Decimal?           @db.Decimal(5, 2)
+  match_date        DateTime?          @default(now()) @db.Timestamp(6)
+  matched_skills    String[]
+  skill_gaps        String[]
+  strengths         String?
+  recommendations   String?
+  candidate_profile candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([candidate_id], map: "idx_job_matches_candidate")
+}
+
+model phone_calls {
+  id            String    @id
+  call_id       String    @unique
+  caller_number String
+  status        String?   @default("in_progress")
+  started_at    DateTime  @db.Timestamp(6)
+  ended_at      DateTime? @db.Timestamp(6)
+  duration      Int?
+  recording_url String?
+  transcript    String?
+  summary       String?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([call_id])
+  @@index([created_at], map: "phone_calls_created_idx")
+  @@index([status])
+}
+
+model professional_competencies {
+  id                Int                @id @default(autoincrement())
+  candidate_id      Int?
+  competency_name   String             @db.VarChar(100)
+  description       String?
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model project_highlights {
+  id             Int       @id @default(autoincrement())
+  project_id     Int?
+  highlight_text String
+  display_order  Int?
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  projects       projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model project_tags {
+  id         Int       @id @default(autoincrement())
+  project_id Int?
+  tag_name   String    @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  projects   projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model projects {
+  id                 Int                  @id @default(autoincrement())
+  candidate_id       Int?
+  project_title      String               @db.VarChar(255)
+  project_subtitle   String?              @db.VarChar(255)
+  description        String?
+  start_date         DateTime?            @db.Date
+  end_date           DateTime?            @db.Date
+  project_url        String?              @db.VarChar(500)
+  repository_url     String?              @db.VarChar(500)
+  is_featured        Boolean?             @default(false)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  project_highlights project_highlights[]
+  project_tags       project_tags[]
+  candidate_profile  candidate_profile?   @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([candidate_id], map: "idx_projects_candidate")
+}
+
+model skill_categories {
+  id            Int       @id @default(autoincrement())
+  category_name String    @unique @db.VarChar(100)
+  display_order Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  skills        skills[]
+}
+
+model skills {
+  id                  Int                @id @default(autoincrement())
+  candidate_id        Int?
+  category_id         Int?
+  skill_name          String             @db.VarChar(100)
+  proficiency_level   String?            @db.VarChar(50)
+  years_of_experience Decimal?           @db.Decimal(3, 1)
+  created_at          DateTime?          @default(now()) @db.Timestamp(6)
+  candidate_profile   candidate_profile? @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill_categories    skill_categories?  @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+
+  @@index([candidate_id], map: "idx_skills_candidate")
+  @@index([category_id], map: "idx_skills_category")
+}
+
+model work_experience {
+  id                         Int                          @id @default(autoincrement())
+  candidate_id               Int?
+  job_title                  String                       @db.VarChar(255)
+  company_name               String                       @db.VarChar(255)
+  location                   String?                      @db.VarChar(255)
+  start_date                 DateTime                     @db.Date
+  end_date                   DateTime?                    @db.Date
+  is_current                 Boolean?                     @default(false)
+  employment_type            String?                      @db.VarChar(50)
+  description                String?
+  created_at                 DateTime?                    @default(now()) @db.Timestamp(6)
+  candidate_profile          candidate_profile?           @relation(fields: [candidate_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  work_experience_highlights work_experience_highlights[]
+  work_experience_tags       work_experience_tags[]
+
+  @@index([candidate_id], map: "idx_experience_candidate")
+}
+
+model work_experience_highlights {
+  id               Int              @id @default(autoincrement())
+  experience_id    Int?
+  highlight_text   String
+  display_order    Int?
+  achievement_type String?          @db.VarChar(50)
+  created_at       DateTime?        @default(now()) @db.Timestamp(6)
+  work_experience  work_experience? @relation(fields: [experience_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model work_experience_tags {
+  id              Int              @id @default(autoincrement())
+  experience_id   Int?
+  tag_name        String           @db.VarChar(50)
+  created_at      DateTime?        @default(now()) @db.Timestamp(6)
+  work_experience work_experience? @relation(fields: [experience_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
