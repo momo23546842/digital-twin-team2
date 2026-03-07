@@ -63,6 +63,14 @@ Important behavior:
     return NextResponse.json({ reply: textReply });
   } catch (err: any) {
     console.error('Chat API Error:', err);
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+
+    // If the LLM tool-calling fails, try the fallback reply from DB
+    try {
+      const fallback = await buildFallbackReply();
+      return NextResponse.json({ reply: fallback });
+    } catch (fallbackErr) {
+      console.error('Fallback also failed:', fallbackErr);
+      return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    }
   }
 }
